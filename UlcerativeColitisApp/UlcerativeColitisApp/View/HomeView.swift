@@ -48,7 +48,6 @@ struct HomeView: View {
             contentView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        
     }
     
     @ViewBuilder

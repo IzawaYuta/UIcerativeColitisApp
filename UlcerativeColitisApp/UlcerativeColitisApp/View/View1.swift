@@ -8,13 +8,18 @@
 import SwiftUI
 
 struct View1: View {
+    
+    @State private var date = Date()
+    
     var body: some View {
         ZStack {
-            Text("View1だよ")
+            DatePicker("", selection: $date, displayedComponents: .date)
+                .labelsHidden()
+                .environment(\.locale, Locale(identifier: "ja_JP"))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+//        .frame(maxWidth: .infinity, maxHeight: .infinity)
 //        .background(Color.gray)
-        .ignoresSafeArea()
+////        .ignoresSafeArea()
     }
 }
 
