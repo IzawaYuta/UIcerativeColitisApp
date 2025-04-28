@@ -6,8 +6,17 @@
 //
 
 import SwiftUI
+import RealmSwift
 
 struct View2: View {
+    
+    @ObservedResults(DateData.self) var dateDataList
+    @State private var note = "" // メモの入力
+    var filteredData: [DateData] {
+        // 選択した日付でフィルタリング
+        dateDataList.filter { isSameDay($0.date, selectedDate ?? Date()) }
+    }
+    
     // 現在表示している月 (初期値は現在日時)
     @State private var currentDate: Date = Date()
     // ユーザーが選択した日付 (最初は何も選択されていない)
@@ -53,8 +62,32 @@ struct View2: View {
                 Text("日付を選択してください")
             }
             
+            TextField("メモを入力", text: $note)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+            
+            // 保存ボタン
+            Button(action: saveData) {
+                Text("データを保存")
+                    .padding()
+                    .foregroundColor(.white)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+            }
+            
+            List {
+                ForEach(filteredData) { data in
+                    VStack(alignment: .leading) {
+                        Text("日付: \(formatDate(data.date))")
+                        Text("メモ: \(data.note)")
+                            .foregroundColor(.gray)
+                    }
+                }
+                .onDelete(perform: deleteData)
+            }
+            
             Spacer() // 上部に寄せる
-        }
+        } // VStack
 //        .padding()
         // currentDateがプログラム的に変更されたときにTabViewも追従するようにする
         .onChange(of: currentDate) { newDate in
@@ -85,6 +118,42 @@ struct View2: View {
     private func startOfMonth(date: Date) -> Date {
         let components = calendar.dateComponents([.year, .month], from: date)
         return calendar.date(from: components)!
+    }
+    
+    private func saveData() {
+        guard !note.isEmpty else { return }
+        
+        let newData = DateData()
+        newData.date = selectedDate ?? Date()
+        newData.note = note
+        
+        let realm = try! Realm()
+        try! realm.write {
+            realm.add(newData, update: .modified)
+        }
+        //            print("保存成功: 日付 - \(formatDate(newData.date)), メモ - \(newData.note)")
+        note = ""
+    }
+    
+    private func deleteData(at offsets: IndexSet) {
+        offsets.forEach { index in
+            let itemToDelete = dateDataList[index]
+            let realm = try! Realm()
+            try! realm.write {
+                realm.delete(itemToDelete)
+            }
+        }
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd"
+        return formatter.string(from: date)
+    }
+    
+    private func isSameDay(_ date1: Date, _ date2: Date) -> Bool {
+        let calendar = Calendar.current
+        return calendar.isDate(date1, inSameDayAs: date2)
     }
 }
 
