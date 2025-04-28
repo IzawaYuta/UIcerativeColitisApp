@@ -6,13 +6,22 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		35D8708973F8CC868F3F2215 /* Pods_UlcerativeColitisApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52B3B13D52D949A1EE4F9B08 /* Pods_UlcerativeColitisApp.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		52B3B13D52D949A1EE4F9B08 /* Pods_UlcerativeColitisApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_UlcerativeColitisApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		88EB4A0C826F29BA2110B3DA /* Pods-UlcerativeColitisApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-UlcerativeColitisApp.release.xcconfig"; path = "Target Support Files/Pods-UlcerativeColitisApp/Pods-UlcerativeColitisApp.release.xcconfig"; sourceTree = "<group>"; };
 		A6904F192DBE4A2200C95115 /* UlcerativeColitisApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UlcerativeColitisApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E23407355997347DE7C1044B /* Pods-UlcerativeColitisApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-UlcerativeColitisApp.debug.xcconfig"; path = "Target Support Files/Pods-UlcerativeColitisApp/Pods-UlcerativeColitisApp.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A6904F1B2DBE4A2200C95115 /* UlcerativeColitisApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = UlcerativeColitisApp;
 			sourceTree = "<group>";
 		};
@@ -23,17 +32,38 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				35D8708973F8CC868F3F2215 /* Pods_UlcerativeColitisApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0523D677095B6490CCF070E3 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				E23407355997347DE7C1044B /* Pods-UlcerativeColitisApp.debug.xcconfig */,
+				88EB4A0C826F29BA2110B3DA /* Pods-UlcerativeColitisApp.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		4B0423B807ABCB45240E8F61 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				52B3B13D52D949A1EE4F9B08 /* Pods_UlcerativeColitisApp.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		A6904F102DBE4A2200C95115 = {
 			isa = PBXGroup;
 			children = (
 				A6904F1B2DBE4A2200C95115 /* UlcerativeColitisApp */,
 				A6904F1A2DBE4A2200C95115 /* Products */,
+				0523D677095B6490CCF070E3 /* Pods */,
+				4B0423B807ABCB45240E8F61 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -52,6 +82,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A6904F272DBE4A2300C95115 /* Build configuration list for PBXNativeTarget "UlcerativeColitisApp" */;
 			buildPhases = (
+				B5FF211851491F0F03402394 /* [CP] Check Pods Manifest.lock */,
 				A6904F152DBE4A2200C95115 /* Sources */,
 				A6904F162DBE4A2200C95115 /* Frameworks */,
 				A6904F172DBE4A2200C95115 /* Resources */,
@@ -64,8 +95,6 @@
 				A6904F1B2DBE4A2200C95115 /* UlcerativeColitisApp */,
 			);
 			name = UlcerativeColitisApp;
-			packageProductDependencies = (
-			);
 			productName = UlcerativeColitisApp;
 			productReference = A6904F192DBE4A2200C95115 /* UlcerativeColitisApp.app */;
 			productType = "com.apple.product-type.application";
@@ -113,6 +142,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		B5FF211851491F0F03402394 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-UlcerativeColitisApp-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A6904F152DBE4A2200C95115 /* Sources */ = {
@@ -246,6 +300,7 @@
 		};
 		A6904F282DBE4A2300C95115 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E23407355997347DE7C1044B /* Pods-UlcerativeColitisApp.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -275,6 +330,7 @@
 		};
 		A6904F292DBE4A2300C95115 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 88EB4A0C826F29BA2110B3DA /* Pods-UlcerativeColitisApp.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
