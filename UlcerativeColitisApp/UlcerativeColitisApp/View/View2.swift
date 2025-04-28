@@ -7,138 +7,309 @@
 
 import SwiftUI
 
-struct CalendarDates: Identifiable {
-    var id = UUID()
-    var date: Date?
-}
-
 struct View2: View {
+    // 現在表示している月 (初期値は現在日時)
+    @State private var currentDate: Date = Date()
+    // ユーザーが選択した日付 (最初は何も選択されていない)
+    @State private var selectedDate: Date? = nil
     
-    // 年
-    let year = Calendar.current.year(for: Date()) ?? 0
-    // 月
-    let month = Calendar.current.month(for: Date()) ?? 0
-    // 日付配列
-    let calendarDates = createCalendarDates(Date())
-    // 曜日
-    let weekdays = Calendar.current.shortWeekdaySymbols
-    // グリッドアイテム
-    let columns: [GridItem] = Array(repeating: .init(.fixed(40)), count: 7)
+    // カレンダー関連の処理で使用
+    private let calendar = Calendar.current
+    // 日付フォーマッター
+    private let dateFormatter = DateFormatter()
     
     var body: some View {
-        VStack {
-            // yyyy/MM
-            Text(String(format: "%04d/%02d", year, month))
-                .font(.system(size: 24))
+        VStack(spacing: 20) {
+            // 1. ヘッダー (年月表示と月移動ボタン)
+            CalendarHeaderView(currentDate: $currentDate)
             
-            // 曜日
-            HStack {
-                ForEach(weekdays, id: \.self) { weekday in
-                    Text(weekday).frame(width: 40, height: 40, alignment: .center)
+            // 2. 曜日ラベル
+            WeekdayLabelsView()
+            
+            // 3. 日付グリッド (TabViewで横スワイプを実現)
+            TabView(selection: $currentDate) {
+                // 前月、当月、次月を事前に描画してスムーズなスワイプを実現
+                // (パフォーマンスのために、もっと多くの月を描画することも検討可能)
+                ForEach([-1, 0, 1], id: \.self) { monthOffset in
+                    let monthDate = calendar.date(byAdding: .month, value: monthOffset, to: startOfMonth(date: Date()))!
+                    MonthDaysGridView(
+                        monthDate: monthDate,
+                        selectedDate: $selectedDate
+                    )
+                    // TabViewの各ページにタグを設定し、currentDateと連動させる
+                    // .tag() には Date をそのまま使うのがシンプル
+                    .tag(monthDate)
                 }
             }
+            // 横スクロール（ページング）スタイルにする
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            // 高さを日付グリッドに合わせて調整 (環境によって調整が必要な場合あり)
+            .frame(height: 200) // 高さは適宜調整してください
             
-            // カレンダー
-            LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(calendarDates) { calendarDates in
-                    if let date = calendarDates.date, let day = Calendar.current.day(for: date) {
-                        Text("\(day)")
-                    } else {
-                        Text("")
-                    }
-                }
+            // 選択された日付を表示 (デバッグ用)
+            if let date = selectedDate {
+                Text("選択された日付: \(date, formatter: Self.itemFormatter)")
+            } else {
+                Text("日付を選択してください")
+            }
+            
+            Spacer() // 上部に寄せる
+        }
+//        .padding()
+        // currentDateがプログラム的に変更されたときにTabViewも追従するようにする
+        .onChange(of: currentDate) { newDate in
+            // ここで明示的にTabViewの選択を更新する必要はないことが多い
+            // TabViewのselectionが$currentDateにバインドされているため
+            // 必要であれば、ここで追加のロジックを実行
+            print("CurrentDate changed to: \(newDate)")
+        }
+        // 最初の月を設定するために onAppear を使う
+        .onAppear {
+            // TabViewの初期表示月を設定
+            currentDate = startOfMonth(date: Date())
+        }
+    }
+    
+    // MARK: - Helper Functions
+    
+    // Dateを指定したフォーマットの文字列に変換するための静的フォーマッタ
+    static var itemFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        formatter.locale = Locale(identifier: "ja_JP") // 日本語表示
+        return formatter
+    }
+    
+    // 指定された日付の月の最初の日を返す
+    private func startOfMonth(date: Date) -> Date {
+        let components = calendar.dateComponents([.year, .month], from: date)
+        return calendar.date(from: components)!
+    }
+}
+
+// MARK: - Header View
+struct CalendarHeaderView: View {
+    @Binding var currentDate: Date
+    private let calendar = Calendar.current
+    private let dateFormatter = DateFormatter()
+    
+    init(currentDate: Binding<Date>) {
+        self._currentDate = currentDate
+        dateFormatter.dateFormat = "yyyy年 MMMM" // 年月表示フォーマット
+        dateFormatter.locale = Locale(identifier: "ja_JP")
+    }
+    
+    var body: some View {
+        HStack {
+//            // 前月ボタン
+//            Button {
+//                changeMonth(by: -1)
+//            } label: {
+//                Image(systemName: "chevron.left")
+//                    .font(.title2)
+//            }
+//            
+//            Spacer()
+            
+            // 年月表示
+            Text(currentDate, formatter: dateFormatter)
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Spacer()
+            
+//            // 次月ボタン
+//            Button {
+//                changeMonth(by: 1)
+//            } label: {
+//                Image(systemName: "chevron.right")
+//                    .font(.title2)
+//            }
+        }
+        .padding(.horizontal)
+    }
+    
+    // 月を変更する関数
+//    private func changeMonth(by amount: Int) {
+//        if let newDate = calendar.date(byAdding: .month, value: amount, to: currentDate) {
+//            // アニメーション付きで変更
+//            withAnimation {
+//                currentDate = newDate
+//            }
+//        }
+//    }
+}
+
+// MARK: - Weekday Labels View
+struct WeekdayLabelsView: View {
+    private let weekdays: [String] = ["日", "月", "火", "水", "木", "金", "土"] // 日本語の曜日
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(weekdays, id: \.self) { weekday in
+                Text(weekday)
+//                    .font(.caption)
+//                    .fontWeight(.medium)
+                    .frame(maxWidth: .infinity) // 各曜日ラベルが均等な幅を持つように
+                    .foregroundColor(weekdayColor(weekday))
+                    .padding(.vertical, -10)
             }
         }
-        .frame(width: 400, height: 400, alignment: .center)
+    }
+    
+    // 曜日に基づいて色を返すヘルパー関数
+    private func weekdayColor(_ weekday: String) -> Color {
+        switch weekday {
+        case "日": return .red
+        case "土": return .blue
+        default: return .primary // 標準の色
+        }
     }
 }
 
-extension Calendar {
-    /// 今月の開始日を取得する
-    /// - Parameter date: 対象日
-    /// - Returns: 開始日
-    func startOfMonth(for date:Date) -> Date? {
-        let comps = dateComponents([.month, .year], from: date)
-        return self.date(from: comps)
+// MARK: - Month Days Grid View
+struct MonthDaysGridView: View {
+    let monthDate: Date // このビューが表示する月の日付（月の初日でなくても良い）
+    @Binding var selectedDate: Date?
+    
+    private let calendar = Calendar.current
+    private let daysInWeek = 7
+    // この月の日付の配列
+    private var days: [Date] {
+        generateDaysInMonth(for: monthDate)
+    }
+    // 月の初日の曜日 (日曜日=1, ..., 土曜日=7)
+    private var startingWeekday: Int {
+        calendar.component(.weekday, from: startOfMonth())
+    }
+    // 月の初日の前に表示する空のスペースの数
+    private var startingSpaces: Int {
+        startingWeekday - 1 // weekdayは1始まりなので調整
     }
     
-    /// 今月の日数を取得する
-    /// - Parameter date: 対象日
-    /// - Returns: 日数
-    func daysInMonth(for date:Date) -> Int? {
-        return range(of: .day, in: .month, for: date)?.count
+    // グリッドの列定義 (7列)
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible()), count: daysInWeek)
     }
     
-    /// 今月の週数を取得する
-    /// - Parameter date: 対象日
-    /// - Returns: 週数
-    func weeksInMonth(for date:Date) -> Int? {
-        return range(of: .weekOfMonth, in: .month, for: date)?.count
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 10) {
+            // 1. 月の初日までの空スペース
+            ForEach(0..<startingSpaces, id: \.self) { _ in
+                Color.clear // 透明なViewでスペースを埋める
+            }
+            
+            // 2. 月の日付
+            ForEach(days, id: \.self) { date in
+                DayCell(date: date, selectedDate: $selectedDate)
+            }
+        }
+        .padding(.horizontal, 5) // グリッド全体の左右パディング
+        // .id(monthDate) // Viewの識別子 (TabViewがこれを認識するために重要)
+        // -> TabViewの.tag()を使うのでここでは不要かも
     }
     
-    func year(for date: Date) -> Int? {
-        let comps = dateComponents([.year], from: date)
-        return comps.year
+    // MARK: - Helper Functions for Grid
+    
+    // 指定された月の最初の日を返す
+    private func startOfMonth() -> Date {
+        let components = calendar.dateComponents([.year, .month], from: monthDate)
+        return calendar.date(from: components)!
     }
     
-    func month(for date: Date) -> Int? {
-        let comps = dateComponents([.month], from: date)
-        return comps.month
-    }
-    
-    func day(for date: Date) -> Int? {
-        let comps = dateComponents([.day], from: date)
-        return comps.day
-    }
-    
-    func weekday(for date: Date) -> Int? {
-        let comps = dateComponents([.weekday], from: date)
-        return comps.weekday
+    // 指定された月の日付（Dateオブジェクト）の配列を生成する
+    private func generateDaysInMonth(for date: Date) -> [Date] {
+        guard let monthInterval = calendar.dateInterval(of: .month, for: date),
+              let monthFirstWeek = calendar.dateInterval(of: .weekOfMonth, for: monthInterval.start),
+              let monthLastWeek = calendar.dateInterval(of: .weekOfMonth, for: monthInterval.end - 1) // endは次の月なので1秒引く
+        else {
+            return []
+        }
+        
+        // 月の全日数を取得
+        guard let range = calendar.range(of: .day, in: .month, for: date) else { return [] }
+        
+        // 月の最初の日を取得
+        let firstOfMonth = startOfMonth()
+        
+        // 各日のDateオブジェクトを生成
+        return range.compactMap { day -> Date? in
+            var components = calendar.dateComponents([.year, .month], from: firstOfMonth)
+            components.day = day
+            return calendar.date(from: components)
+        }
     }
 }
 
-/// カレンダー表示用の日付配列を取得
-/// - Parameter date: カレンダー表示の対象日
-/// - Returns: 日付配列
-func createCalendarDates(_ date: Date) -> [CalendarDates] {
-    var days = [CalendarDates]()
+// MARK: - Day Cell View
+struct DayCell: View {
+    let date: Date
+    @Binding var selectedDate: Date?
+    private let calendar = Calendar.current
     
-    // 今月の開始日
-    let startOfMonth = Calendar.current.startOfMonth(for: date)
-    // 今月の日数
-    let daysInMonth = Calendar.current.daysInMonth(for: date)
-    
-    guard let daysInMonth = daysInMonth, let startOfMonth = startOfMonth else { return [] }
-    
-    // 今月の全ての日付
-    for day in 0..<daysInMonth {
-        // 今月の開始日から1日ずつ加算
-        days.append(CalendarDates(date: Calendar.current.date(byAdding: .day, value: day, to: startOfMonth)))
+    // このセルが選択されているかどうか
+    private var isSelected: Bool {
+        guard let selected = selectedDate else { return false }
+        return calendar.isDate(date, inSameDayAs: selected)
     }
     
-    guard let firstDay = days.first, let lastDay = days.last,
-          let firstDate = firstDay.date, let lastDate = lastDay.date,
-          let firstDateWeekday = Calendar.current.weekday(for: firstDate),
-          let lastDateWeekday = Calendar.current.weekday(for: lastDate) else { return [] }
-    
-    // 初週のオフセット日数
-    let firstWeekEmptyDays = firstDateWeekday - 1
-    // 最終週のオフセット日数
-    let lastWeekEmptyDays = 7 - lastDateWeekday
-    
-    // 初週のオフセットを追加
-    for _ in 0..<firstWeekEmptyDays {
-        days.insert(CalendarDates(date: nil), at: 0)
+    // このセルが今日の日付かどうか
+    private var isToday: Bool {
+        calendar.isDateInToday(date)
     }
     
-    // 最終週のオフセットを追加
-    for _ in 0..<lastWeekEmptyDays {
-        days.append(CalendarDates(date: nil))
+    // 日付番号の文字列
+    private var dayString: String {
+        let day = calendar.component(.day, from: date)
+        return String(day)
     }
     
-    return days
+    var body: some View {
+        Button {
+            // 日付を選択/選択解除
+            if isSelected {
+                // selectedDate = nil // 再タップで選択解除する場合
+            } else {
+                selectedDate = date
+            }
+        } label: {
+            Text(dayString)
+                .frame(maxWidth: .infinity)
+                .frame(height: 30) // セルの高さを固定
+                .font(.system(size: 17)) // フォントサイズ調整
+                .foregroundColor(textColor)
+                .background(backgroundView)
+                .clipShape(Circle()) // 円形にする
+                .overlay(
+                    // 今日の日付にだけ枠線をつける
+                    Circle()
+                        .stroke(isToday ? Color.blue : Color.clear, lineWidth: 1.5)
+                )
+        }
+    }
+    
+    // テキストの色を決定
+    private var textColor: Color {
+        if isSelected {
+            return .white // 選択されている場合は白
+        } else if isToday {
+            return .blue // 今日の日付は青 (選択されていなければ)
+        } else {
+            return .primary // 通常の日付
+        }
+    }
+    
+    // 背景を決定
+    @ViewBuilder
+    private var backgroundView: some View {
+        if isSelected {
+            Circle().fill(Color.red) // 選択されている場合は赤い円
+        } else {
+            Color.clear // 通常は透明
+        }
+    }
 }
-
 #Preview {
     View2()
 }
