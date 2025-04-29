@@ -12,6 +12,7 @@ struct View1: View {
     
     @State private var date = Date()
     @State private var note = "" // メモの入力
+    @State private var showDatePicker = false
     @ObservedResults(DateData.self) var dateDataList
     
     var filteredData: [DateData] {
@@ -21,9 +22,22 @@ struct View1: View {
     
     var body: some View {
         VStack {
-            DatePicker("", selection: $date, displayedComponents: .date)
-                .labelsHidden()
-                .environment(\.locale, Locale(identifier: "ja_JP"))
+            Text("\(formatDate(date))")
+                .onTapGesture {
+                    showDatePicker = true
+                }
+                .sheet(isPresented: $showDatePicker) {
+                    VStack {
+                        DatePicker("日付選択", selection: $date, displayedComponents: .date)
+                            .datePickerStyle(GraphicalDatePickerStyle())
+                            .environment(\.locale, Locale(identifier: "ja_JP"))
+                            .labelsHidden()
+                        Button("完了") {
+                            showDatePicker = false
+                        }
+                    }
+                    .presentationDetents([.medium])
+                }
             
             TextField("メモを入力", text: $note)
                 .textFieldStyle(RoundedBorderTextFieldStyle())

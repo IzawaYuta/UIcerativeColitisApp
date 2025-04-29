@@ -171,68 +171,35 @@ struct CalendarHeaderView: View {
     
     var body: some View {
         HStack {
-//            // 前月ボタン
-//            Button {
-//                changeMonth(by: -1)
-//            } label: {
-//                Image(systemName: "chevron.left")
-//                    .font(.title2)
-//            }
-//            
-//            Spacer()
-            
             // 年月表示
             Text(currentDate, formatter: dateFormatter)
                 .font(.title2)
                 .fontWeight(.bold)
-            
             Spacer()
-            
-//            // 次月ボタン
-//            Button {
-//                changeMonth(by: 1)
-//            } label: {
-//                Image(systemName: "chevron.right")
-//                    .font(.title2)
-//            }
         }
         .padding(.horizontal)
     }
-    
-    // 月を変更する関数
-//    private func changeMonth(by amount: Int) {
-//        if let newDate = calendar.date(byAdding: .month, value: amount, to: currentDate) {
-//            // アニメーション付きで変更
-//            withAnimation {
-//                currentDate = newDate
-//            }
-//        }
-//    }
 }
 
 // MARK: - Weekday Labels View
 struct WeekdayLabelsView: View {
-    private let weekdays: [String] = ["日", "月", "火", "水", "木", "金", "土"] // 日本語の曜日
-    
+    private let weekdays: [String] = ["日", "月", "火", "水", "木", "金", "土"]
     var body: some View {
         HStack(spacing: 0) {
             ForEach(weekdays, id: \.self) { weekday in
                 Text(weekday)
-//                    .font(.caption)
-//                    .fontWeight(.medium)
-                    .frame(maxWidth: .infinity) // 各曜日ラベルが均等な幅を持つように
+                    .frame(maxWidth: .infinity)
                     .foregroundColor(weekdayColor(weekday))
                     .padding(.vertical, -10)
             }
         }
     }
     
-    // 曜日に基づいて色を返すヘルパー関数
     private func weekdayColor(_ weekday: String) -> Color {
         switch weekday {
         case "日": return .red
         case "土": return .blue
-        default: return .primary // 標準の色
+        default: return .primary
         }
     }
 }
