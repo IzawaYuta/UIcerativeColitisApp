@@ -54,7 +54,7 @@ struct HomeView: View {
     private var contentView: some View {
         switch select {
         case .option1:
-            View1()
+            ToDayView()
         case .option2:
             View2()
         }
