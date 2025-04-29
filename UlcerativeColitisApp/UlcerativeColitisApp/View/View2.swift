@@ -11,7 +11,6 @@ import RealmSwift
 struct View2: View {
     
     @ObservedResults(DateData.self) var dateDataList
-    @State private var note = "" // メモの入力
     var filteredData: [DateData] {
         // 選択した日付でフィルタリング
         dateDataList.filter { isSameDay($0.date, selectedDate ?? Date()) }
@@ -55,36 +54,50 @@ struct View2: View {
             // 高さを日付グリッドに合わせて調整 (環境によって調整が必要な場合あり)
             .frame(height: 200) // 高さは適宜調整してください
             
-            // 選択された日付を表示 (デバッグ用)
-            if let date = selectedDate {
-                Text("選択された日付: \(date, formatter: Self.itemFormatter)")
-            } else {
-                Text("日付を選択してください")
-            }
             
-            TextField("メモを入力", text: $note)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-            
-            // 保存ボタン
-            Button(action: saveData) {
-                Text("データを保存")
-                    .padding()
-                    .foregroundColor(.white)
-                    .background(Color.blue)
-                    .cornerRadius(8)
-            }
-            
-            List {
-                ForEach(filteredData) { data in
-                    VStack(alignment: .leading) {
-                        Text("日付: \(formatDate(data.date))")
-                        Text("メモ: \(data.note)")
+            HStack(spacing: 50) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.gray.secondary)
+                        .frame(width: 150, height: 150)
+                    if let stoolsCount = dateDataList.filter({ isSameDay($0.date, selectedDate ?? Date()) }).first?.stoolsCount {
+                        Text("\(stoolsCount)") // stoolsCount を表示
+                            .font(.largeTitle) // フォントサイズを調整
+                            .bold()
+                    } else {
+                        Text("データなし") // stoolsCount がない場合の表示
+                            .font(.headline)
                             .foregroundColor(.gray)
                     }
                 }
-                .onDelete(perform: deleteData)
+            
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.gray.secondary)
+                    .frame(width: 150, height: 150)
             }
+//            TextField("メモを入力", text: $note)
+//                .textFieldStyle(RoundedBorderTextFieldStyle())
+//                .padding()
+//            
+//            // 保存ボタン
+//            Button(action: saveData) {
+//                Text("データを保存")
+//                    .padding()
+//                    .foregroundColor(.white)
+//                    .background(Color.blue)
+//                    .cornerRadius(8)
+//            }
+            
+//            List {
+//                ForEach(filteredData) { data in
+//                    VStack(alignment: .leading) {
+//                        Text("日付: \(formatDate(data.date))")
+//                        Text("メモ: \(data.note)")
+//                            .foregroundColor(.gray)
+//                    }
+//                }
+//                .onDelete(perform: deleteData)
+//            }
             
             Spacer() // 上部に寄せる
         } // VStack
@@ -120,30 +133,30 @@ struct View2: View {
         return calendar.date(from: components)!
     }
     
-    private func saveData() {
-        guard !note.isEmpty else { return }
-        
-        let newData = DateData()
-        newData.date = selectedDate ?? Date()
-        newData.note = note
-        
-        let realm = try! Realm()
-        try! realm.write {
-            realm.add(newData, update: .modified)
-        }
-        //            print("保存成功: 日付 - \(formatDate(newData.date)), メモ - \(newData.note)")
-        note = ""
-    }
-    
-    private func deleteData(at offsets: IndexSet) {
-        offsets.forEach { index in
-            let itemToDelete = dateDataList[index]
-            let realm = try! Realm()
-            try! realm.write {
-                realm.delete(itemToDelete)
-            }
-        }
-    }
+//    private func saveData() {
+//        guard !note.isEmpty else { return }
+//        
+//        let newData = DateData()
+//        newData.date = selectedDate ?? Date()
+//        newData.note = note
+//        
+//        let realm = try! Realm()
+//        try! realm.write {
+//            realm.add(newData, update: .modified)
+//        }
+//        //            print("保存成功: 日付 - \(formatDate(newData.date)), メモ - \(newData.note)")
+//        note = ""
+//    }
+//    
+//    private func deleteData(at offsets: IndexSet) {
+//        offsets.forEach { index in
+//            let itemToDelete = dateDataList[index]
+//            let realm = try! Realm()
+//            try! realm.write {
+//                realm.delete(itemToDelete)
+//            }
+//        }
+//    }
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -165,7 +178,7 @@ struct CalendarHeaderView: View {
     
     init(currentDate: Binding<Date>) {
         self._currentDate = currentDate
-        dateFormatter.dateFormat = "yyyy年 MMMM" // 年月表示フォーマット
+        dateFormatter.dateFormat = "yyyy年 MM" // 年月表示フォーマット
         dateFormatter.locale = Locale(identifier: "ja_JP")
     }
     
@@ -197,8 +210,8 @@ struct WeekdayLabelsView: View {
     
     private func weekdayColor(_ weekday: String) -> Color {
         switch weekday {
-        case "日": return .red
-        case "土": return .blue
+        case "日": return .red.opacity(0.8)
+        case "土": return .blue.opacity(0.8)
         default: return .primary
         }
     }

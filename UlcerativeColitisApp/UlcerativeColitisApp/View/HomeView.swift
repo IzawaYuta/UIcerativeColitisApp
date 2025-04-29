@@ -8,8 +8,8 @@
 import SwiftUI
 
 enum SelectButton: String, CaseIterable {
-    case option1 = "View1"
-    case option2 = "View2"
+    case option1 = "Today"
+    case option2 = "Month"
 }
 
 struct HomeView: View {
