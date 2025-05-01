@@ -44,13 +44,13 @@ struct ToDayView: View {
                 plusButton: {
                     let newCount = count + 1
                     saveData(count: newCount)
-                    count = newCount
+                    self.count = newCount
                 },
                 minusButton: {
                     if count > 0 {
                         let newCount = count - 1
                         saveData(count: newCount)
-                        count = newCount
+                        self.count = newCount
                     }
                 }
             )

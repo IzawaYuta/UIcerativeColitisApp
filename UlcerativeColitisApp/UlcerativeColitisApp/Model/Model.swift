@@ -8,7 +8,7 @@
 import SwiftUI
 import RealmSwift
 
-// データモデル
+
 class DateData: Object, Identifiable {
     @Persisted(primaryKey: true) var id: ObjectId
     @Persisted var date: Date // 保存する日付

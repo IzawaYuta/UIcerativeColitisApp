@@ -60,17 +60,25 @@ struct View2: View {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.gray.secondary)
                         .frame(width: 150, height: 150)
-                    if let stoolsCount = dateDataList.filter({ isSameDay($0.date, selectedDate ?? Date()) }).first?.stoolsCount {
-                        Text("\(stoolsCount)") // stoolsCount を表示
-                            .font(.largeTitle) // フォントサイズを調整
-                            .bold()
-                    } else {
-                        Text("データなし") // stoolsCount がない場合の表示
-                            .font(.headline)
-                            .foregroundColor(.gray)
+                    HStack {
+                        VStack {
+                            Image("Image")
+                                .resizable()
+                                .frame(width: 20, height: 20)
+                            Text("ToDay")
+                        }
+                        if let stoolsCount = dateDataList.filter({ isSameDay($0.date, selectedDate ?? Date()) }).first?.stoolsCount {
+                            Text("\(stoolsCount)") // stoolsCount を表示
+                                .font(.largeTitle)
+                                .bold()
+                        } else {
+                            Text("0")
+                                .font(.largeTitle)
+                                .bold()
+                        }
                     }
                 }
-            
+                
                 RoundedRectangle(cornerRadius: 10)
                     .fill(Color.gray.secondary)
                     .frame(width: 150, height: 150)
