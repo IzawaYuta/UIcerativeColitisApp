@@ -13,11 +13,12 @@ struct ToDayView: View {
     @State private var date = Date()
     @State private var showDatePicker = false
     @State private var count: Int = 0
+    @State private var showStoolsRecordView = false
     //    @ObservedResults(DateData.self) var dateDataList
     @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
     
     var body: some View {
-        VStack {
+        VStack(spacing: 40) {
             HStack {
                 Text("\(formatDate(date))")
                     .padding(.horizontal)
@@ -39,31 +40,44 @@ struct ToDayView: View {
                     }
                 Spacer()
             }
-            StoolsCountView(
-                displayCount: count,
-                plusButton: {
-                    let newCount = count + 1
-                    saveData(count: newCount)
-                    self.count = newCount
-                },
-                minusButton: {
-                    if count > 0 {
-                        let newCount = count - 1
-                        saveData(count: newCount)
-                        self.count = newCount
+            ZStack {
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.gray.secondary)
+                HStack {
+                    Button("追加") {
+                        showStoolsRecordView = true
+                    }
+                    .sheet(isPresented: $showStoolsRecordView, onDismiss: { showStoolsRecordView = false }) {
+                            StoolsRecordView()
+                            .presentationDetents([.height(300)])
+                        }
+                    StoolsCountView(
+                        displayCount: count,
+                        plusButton: {
+                            let newCount = count + 1
+                            saveData(count: newCount)
+                            self.count = newCount
+                        },
+                        minusButton: {
+                            if count > 0 {
+                                let newCount = count - 1
+                                saveData(count: newCount)
+                                self.count = newCount
+                            }
+                        }
+                    )
+                    .onAppear {
+                        loadCountForSelectedDate(for: date)
+                    }
+                    .onChange(of: date) { newDate in
+                        loadCountForSelectedDate(for: newDate)
+                    }
+                    .onChange(of: dateDataList.count) {
+                        loadCountForSelectedDate(for: date)
                     }
                 }
-            )
-            .onAppear {
-                loadCountForSelectedDate(for: date)
             }
-            .onChange(of: date) { newDate in
-                loadCountForSelectedDate(for: newDate)
-            }
-            .onChange(of: dateDataList.count) {
-                loadCountForSelectedDate(for: date)
-            }
-            
+            .frame(width: 400, height: 40)
             //            List {
             //                ForEach(filteredData) { data in
             //                    VStack(alignment: .leading) {

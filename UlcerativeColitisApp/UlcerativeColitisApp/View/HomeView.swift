@@ -18,13 +18,13 @@ struct HomeView: View {
     @Namespace private var segmentControl
     
     var body: some View {
-        VStack {
+        ZStack(alignment: .topTrailing) {
             HStack {
                 ForEach(SelectButton.allCases, id: \.self) { item in
                     Text(item.rawValue)
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .foregroundColor(select == item ? .white : .black)
+                        .padding(.vertical, 2)
+                        .foregroundColor(select == item ? .black : .white)
                         .matchedGeometryEffect(id: item, in: segmentControl)
                         .onTapGesture {
                             withAnimation {
@@ -33,14 +33,13 @@ struct HomeView: View {
                         }
                 }
             }
-            .frame(height: 25)
+            .frame(height: 20)
             .padding(6)
             .background(
-                Capsule()
-                    .fill(Color.gray)
+                RoundedRectangle(cornerRadius: 10)
                     .overlay(
-                        Capsule()
-                            .fill(Color.black)
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.white)
                             .matchedGeometryEffect(id: select, in: segmentControl,  isSource: false)
                     )
             )
@@ -48,6 +47,8 @@ struct HomeView: View {
             contentView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .padding(.vertical)
+        .padding(.horizontal)
     }
     
     @ViewBuilder

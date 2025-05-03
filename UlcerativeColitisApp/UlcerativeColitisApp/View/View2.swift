@@ -56,25 +56,34 @@ struct View2: View {
             
             
             HStack(spacing: 50) {
-                ZStack {
+                ZStack(alignment: .center) {
                     RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.black, lineWidth: 2)
                         .fill(Color.gray.secondary)
                         .frame(width: 150, height: 150)
                     HStack {
-                        VStack {
-                            Image("Image")
-                                .resizable()
-                                .frame(width: 20, height: 20)
+                        VStack(alignment: .trailing, spacing: -3) {
                             Text("ToDay")
+                                .font(.system(size: 20))
+                            ZStack {
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.05))
+                                Image("Image")
+                                    .resizable()
+                            }
+                            .frame(width: 40, height: 40)
                         }
+                        .offset(x: -3, y: 32)
                         if let stoolsCount = dateDataList.filter({ isSameDay($0.date, selectedDate ?? Date()) }).first?.stoolsCount {
                             Text("\(stoolsCount)") // stoolsCount を表示
-                                .font(.largeTitle)
+                                .font(.system(size: 70))
                                 .bold()
+                                .offset(x: -5, y: -35)
                         } else {
                             Text("0")
-                                .font(.largeTitle)
+                                .font(.system(size: 70))
                                 .bold()
+                                .offset(x: -5, y: -35)
                         }
                     }
                 }
@@ -109,7 +118,7 @@ struct View2: View {
             
             Spacer() // 上部に寄せる
         } // VStack
-//        .padding()
+        .padding(.vertical, 4)
         // currentDateがプログラム的に変更されたときにTabViewも追従するようにする
         .onChange(of: currentDate) { newDate in
             // ここで明示的にTabViewの選択を更新する必要はないことが多い
@@ -186,7 +195,7 @@ struct CalendarHeaderView: View {
     
     init(currentDate: Binding<Date>) {
         self._currentDate = currentDate
-        dateFormatter.dateFormat = "yyyy年 MM" // 年月表示フォーマット
+        dateFormatter.dateFormat = "yyyy　MM" // 年月表示フォーマット
         dateFormatter.locale = Locale(identifier: "ja_JP")
     }
     
