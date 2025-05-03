@@ -16,6 +16,9 @@ struct MainTabView: View {
             Tab("1", systemImage: "plus") {
                 HomeView()
             }
+            Tab("2", systemImage: "plus") {
+                StoolsRecordView()
+            }
         }
     }
 }
