@@ -10,11 +10,15 @@ import RealmSwift
 
 struct StoolsRecordView: View {
     
-    @State private var selectedStoolTypes: Set<Int> = [] // 複数選択可能にするためのSet
+    @State private var selectedStoolTypes: Set<Int> = []
     @State private var date = Date()
+    @State private var recordTime = Date()
     @State private var showRecordList = false
     
     @ObservedResults(StoolRecordModel.self) var stoolRecordModel
+    @Environment(\.dismiss) var dismiss
+    
+    let selectedDate: Date
     
     let stoolTypes = [
         (id: 1, label: "硬便", image: "1"),
@@ -26,27 +30,23 @@ struct StoolsRecordView: View {
     ]
     
     var body: some View {
-        VStack(spacing: 40) {
-            HStack(spacing: 20) {
+        VStack(spacing: 30) {
+            HStack(spacing: 15) {
                 ForEach(stoolTypes, id: \.id) { type in
-                    VStack(spacing: 10) {
+                    VStack(spacing: 8) {
                         Image(type.image)
                             .resizable()
-                            .frame(width: 50, height: 50)
-                            .background(
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 60, height: 60)
-                            )
+                            .scaledToFit()
+                            .frame(width: 45, height: 45)
+                            .background(Circle().fill(Color.white).frame(width: 55, height: 55))
                             .overlay(
                                 Circle()
-                                    .stroke(selectedStoolTypes.contains(type.id) ? Color.cyan : Color.gray, lineWidth: 4)
-                                    .frame(width: 60, height: 60)
+                                    .stroke(selectedStoolTypes.contains(type.id) ? Color.cyan : Color.gray.opacity(0.5), lineWidth: 3)
+                                    .frame(width: 55, height: 55)
                             )
-                            .shadow(color: selectedStoolTypes.contains(type.id) ? Color.cyan.opacity(0.5) : Color.clear, radius: 10)
-
+                            .shadow(color: selectedStoolTypes.contains(type.id) ? Color.cyan.opacity(0.4) : Color.clear, radius: 8)
                             .onTapGesture {
-                                withAnimation {
+                                withAnimation(.easeInOut) {
                                     if selectedStoolTypes.contains(type.id) {
                                         selectedStoolTypes.remove(type.id)
                                     } else {
@@ -55,121 +55,198 @@ struct StoolsRecordView: View {
                                 }
                             }
                         Text(type.label)
-                            .font(.system(size: 12))
+                            .font(.caption)
+                            .lineLimit(1)
                     }
                 }
             }
-            HStack {
-                Button("履歴") {
+            .padding(.horizontal)
+            
+            Divider()
+            
+            HStack(spacing: 20) {
+                Button {
                     showRecordList.toggle()
+                } label: {
+                    Label("履歴", systemImage: "list.bullet")
                 }
-                    .sheet(isPresented: $showRecordList) {
-                        StoolRecordListView()
-                    }
-                VStack {
-                    DatePicker("時間", selection: $date, displayedComponents: .hourAndMinute)
+                .sheet(isPresented: $showRecordList) {
+                    StoolRecordListView(selectedDate: selectedDate)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing) {
+                    DatePicker("時間", selection: $recordTime, displayedComponents: .hourAndMinute)
                         .labelsHidden()
-                        .pickerStyle(.menu)
-                        .onAppear {
-                            date = Date()
-                        }
-                    Button(action: {
-                        date = Date()
-                    }) {
-                        Text("現在")
+                        .datePickerStyle(.compact)
+                        .frame(maxWidth: 120)
+                    Button("現在") {
+                        recordTime = Date()
                     }
-                }
-                Text("追加")
+                    .font(.caption)
                     .foregroundColor(.blue)
-                    .frame(width: 100, height: 50)
-                    .background(
-                        RoundedRectangle(cornerRadius: 13)
-                            .fill(Color.green)
-                    )
-                    .onTapGesture {
-                        saveStool(date: date, stoolTypes: Array(selectedStoolTypes)) // 保存
-                    }
-                Button(action: {
-                    resetStoolData() // データをリセット
-                }, label: {
-                    Text("データリセット")
+                }
+                
+                Button {
+                    saveStoolRecord()
+                    dismiss()
+                } label: {
+                    Text("追加")
+                        .fontWeight(.semibold)
                         .foregroundColor(.white)
-                        .padding()
-                        .background(Color.red)
-                        .cornerRadius(10)
-                })
+                        .frame(width: 80, height: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(selectedStoolTypes.isEmpty ? Color.gray : Color.green)
+                        )
+                }
+                .disabled(selectedStoolTypes.isEmpty)
+                
             }
+            .padding(.horizontal)
+            
+            // データリセットボタン (必要なら)
+            // Button("全データリセット", role: .destructive) { resetAllStoolData() }
+            //    .padding(.top)
+            
+            Spacer()
+        }
+        .padding(.top, 20)
+        .onAppear {
+            recordTime = Date()
         }
     }
     
-    private func saveStool(date: Date, stoolTypes: [Int]) {
+    // --- 関数 ---
+    
+    private func saveStoolRecord() {
+        guard !selectedStoolTypes.isEmpty else { return }
+        
         let realm = try! Realm()
         
-        // 現在のデータ数を取得して、次のtimesを計算
-        let currentCount = realm.objects(StoolRecordModel.self).count
-        let nextTimes = currentCount + 1
+        // ToDayViewから渡された日付(年月日)と、このViewで選択された時間(時分秒)を組み合わせる
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day], from: selectedDate)
+        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: recordTime)
+        
+        var combinedComponents = DateComponents()
+        combinedComponents.year = dateComponents.year
+        combinedComponents.month = dateComponents.month
+        combinedComponents.day = dateComponents.day
+        combinedComponents.hour = timeComponents.hour
+        combinedComponents.minute = timeComponents.minute
+        combinedComponents.second = timeComponents.second // 秒も保持する場合
+        
+        guard let finalRecordDateTime = calendar.date(from: combinedComponents) else {
+            print("Error: Could not combine date and time.")
+            return
+        }
         
         // 新しいレコードを作成
         let newRecord = StoolRecordModel()
-        newRecord.date = date
-        newRecord.times = nextTimes // 保存されているデータ数に基づいて +1
-        newRecord.stoolTimes.append(objectsIn: Array(repeating: date, count: stoolTypes.count))
-        newRecord.stoolTypes.append(objectsIn: stoolTypes)
+        newRecord.date = finalRecordDateTime // 組み合わせた日時を保存
+        newRecord.stoolTypes.append(objectsIn: Array(selectedStoolTypes).sorted()) // タイプIDをソートして保存推奨
+        // newRecord.stoolTimes は使わないので削除 or コメントアウト
         
         // Realmに保存
         try! realm.write {
             realm.add(newRecord)
         }
-        withAnimation {
-            selectedStoolTypes = []
-        }
-//        print("Saved new record: \(newRecord)")
+        
+        print("Saved new stool record for \(formatDate(finalRecordDateTime)) with types: \(selectedStoolTypes)")
+        // 保存後、選択状態をリセット (dismissでViewが閉じるので不要かも)
+        // selectedStoolTypes = []
     }
-
     
-    private func resetStoolData() {
+    // 全データ削除 (必要に応じて)
+    private func resetAllStoolData() {
         let realm = try! Realm()
         try! realm.write {
             let allRecords = realm.objects(StoolRecordModel.self)
-            realm.delete(allRecords) // StoolRecordModelのすべてのデータを削除
+            realm.delete(allRecords)
         }
-//        print("All records have been deleted.")
+        print("All StoolRecordModel data have been deleted.")
+        dismiss() // 削除後シートを閉じる
     }
-
     
+    // 日付フォーマット (デバッグ用)
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd HH:mm"
+        formatter.dateFormat = "yyyy/MM/dd HH:mm:ss"
+        formatter.locale = Locale(identifier: "ja_JP")
         return formatter.string(from: date)
     }
 }
 
+// --- 履歴表示用View (StoolRecordListView) ---
+// (前の回答の StoolRecordListView を参照してください。
+// selectedDate を受け取り、その日付でフィルタリングする実装が必要です)
+// 例:
 struct StoolRecordListView: View {
+    let selectedDate: Date
+    @ObservedResults(
+        StoolRecordModel.self,
+        filter: NSPredicate(value: false), // 初期フィルタ（下で上書き）
+        sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)
+    ) var recordsForDate
     
-    @ObservedResults(StoolRecordModel.self) var stoolRecordModel
+    init(selectedDate: Date) {
+        self.selectedDate = selectedDate
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: selectedDate)
+        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            fatalError("Could not calculate start of next day.")
+        }
+        // Filter を動的に設定
+        let predicate = NSPredicate(format: "date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
+        _recordsForDate = ObservedResults(
+            StoolRecordModel.self,
+            filter: predicate,
+            sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)
+        )
+    }
     
     var body: some View {
-        List(stoolRecordModel) { list in
-            HStack {
-                Text(formatDate(list.date)) // 日付をフォーマットして表示
-                Spacer()
-                Text("\(list.stoolTypes)") // 回数の表示
-                Text("\(list.times)")
-                    .foregroundColor(.red)
+        NavigationView {
+            List {
+                ForEach(recordsForDate) { record in
+                    HStack {
+                        Text(record.date, style: .time) // 時間表示
+                        Spacer()
+                        Text(record.readableStoolTypes().joined(separator: ", "))
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+                }
+                .onDelete(perform: deleteRecord)
             }
+            .navigationTitle("\(formatDateOnly(selectedDate)) の記録")
+            .navigationBarItems(trailing: EditButton())
         }
     }
     
-    private func formatDate(_ date: Date) -> String {
+    private func deleteRecord(at offsets: IndexSet) {
+        // 削除処理 (前の回答と同様)
+        guard let realm = recordsForDate.realm else { return }
+        try? realm.write {
+            let objectsToDelete = offsets.map { recordsForDate[$0] }
+            realm.delete(objectsToDelete)
+        }
+    }
+    
+    private func formatDateOnly(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd HH:mm"
+        formatter.dateStyle = .short // "yyyy/MM/dd" 形式 (ロケール依存)
+        formatter.timeStyle = .none
+        formatter.locale = Locale(identifier: "ja_JP")
         return formatter.string(from: date)
     }
 }
 
 #Preview {
-    StoolsRecordView()
+    StoolsRecordView(selectedDate: Date())
 }
 #Preview {
-    StoolRecordListView()
+    StoolRecordListView(selectedDate: Date())
 }
