@@ -40,36 +40,35 @@ struct ToDayView: View {
             }
             .padding(.top)
             
-            VStack(spacing: 10) {
-                Button {
-                    showStoolsRecordView = true
-                } label: {
-                    Label("記録を追加", systemImage: "plus.circle.fill")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 20)
-                        .background(Color.blue)
-                        .clipShape(Capsule())
-                }
-                .sheet(isPresented: $showStoolsRecordView) {
-                    StoolsRecordView(selectedDate: date)
-                        .presentationDetents([.medium, .large])
-                }
-                
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)
                         .fill(Color.blue.opacity(0.1))
                     
                     HStack(spacing: 15) {
+                        Button(action: {
+                            showStoolsRecordView = true
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                        .font(.system(size: 15))
+                        .frame(width: 30, height: 30)
+                        .foregroundColor(.white)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                        .sheet(isPresented: $showStoolsRecordView) {
+                            StoolsRecordView(selectedDate: date)
+                                .presentationDetents([.medium, .large])
+                        }
+//                        Divider().frame(height: 10)
                         VStack {
-                            Text("記録回数")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                            
                             Text("\(stoolRecordCountForSelectedDate)")
-                                .font(.title2.weight(.bold))
+                                .font(.title.weight(.bold))
                                 .foregroundColor(.primary)
                                 .id("total_\(date)")
+                            Text("排便回数")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                         .frame(minWidth: 60, alignment: .center)
                         
@@ -100,8 +99,7 @@ struct ToDayView: View {
                     .padding(.vertical, 10)
                 }
                 .frame(height: 85)
-                .padding(.horizontal) 
-            }
+                .padding(.horizontal)
             
             Spacer()
         }
