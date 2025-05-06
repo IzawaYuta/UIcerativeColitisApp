@@ -31,7 +31,7 @@ struct StoolsRecordView: View {
     
     var body: some View {
         VStack(spacing: 30) {
-            HStack(spacing: 15) {
+            HStack(spacing: 22) {
                 ForEach(stoolTypes, id: \.id) { type in
                     VStack(spacing: 8) {
                         Image(type.image)
@@ -90,7 +90,7 @@ struct StoolsRecordView: View {
                 
                 Button {
                     saveStoolRecord()
-                    dismiss()
+//                    dismiss()
                 } label: {
                     Text("追加")
                         .fontWeight(.semibold)
@@ -106,9 +106,7 @@ struct StoolsRecordView: View {
             }
             .padding(.horizontal)
             
-            // データリセットボタン (必要なら)
-            // Button("全データリセット", role: .destructive) { resetAllStoolData() }
-            //    .padding(.top)
+             Button("全データリセット", role: .destructive) { resetAllStoolData() }
             
             Spacer()
         }
@@ -118,46 +116,49 @@ struct StoolsRecordView: View {
         }
     }
     
-    // --- 関数 ---
-    
     private func saveStoolRecord() {
         guard !selectedStoolTypes.isEmpty else { return }
         
         let realm = try! Realm()
         
-        // ToDayViewから渡された日付(年月日)と、このViewで選択された時間(時分秒)を組み合わせる
         let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: selectedDate)
+        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            print("Error: Could not calculate date range for counting.")
+            return
+        }
+        
+        let existingRecordsCount = realm.objects(StoolRecordModel.self)
+            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
+            .count
+        
         let dateComponents = calendar.dateComponents([.year, .month, .day], from: selectedDate)
         let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: recordTime)
-        
         var combinedComponents = DateComponents()
         combinedComponents.year = dateComponents.year
         combinedComponents.month = dateComponents.month
         combinedComponents.day = dateComponents.day
         combinedComponents.hour = timeComponents.hour
         combinedComponents.minute = timeComponents.minute
-        combinedComponents.second = timeComponents.second // 秒も保持する場合
-        
+        combinedComponents.second = timeComponents.second
         guard let finalRecordDateTime = calendar.date(from: combinedComponents) else {
             print("Error: Could not combine date and time.")
             return
         }
         
-        // 新しいレコードを作成
         let newRecord = StoolRecordModel()
-        newRecord.date = finalRecordDateTime // 組み合わせた日時を保存
-        newRecord.stoolTypes.append(objectsIn: Array(selectedStoolTypes).sorted()) // タイプIDをソートして保存推奨
-        // newRecord.stoolTimes は使わないので削除 or コメントアウト
+        newRecord.date = finalRecordDateTime
+        newRecord.times = existingRecordsCount + 1
+        let sortedSelectedTypes = Array(selectedStoolTypes).sorted()
+        newRecord.stoolTypes.append(objectsIn: sortedSelectedTypes)
         
-        // Realmに保存
         try! realm.write {
             realm.add(newRecord)
         }
-        
-        print("Saved new stool record for \(formatDate(finalRecordDateTime)) with types: \(selectedStoolTypes)")
-        // 保存後、選択状態をリセット (dismissでViewが閉じるので不要かも)
-        // selectedStoolTypes = []
+        selectedStoolTypes = []
+        print("Saved new stool record #\(newRecord.times) for \(formatDate(finalRecordDateTime)) with types: \(selectedStoolTypes)")
     }
+
     
     // 全データ削除 (必要に応じて)
     private func resetAllStoolData() {
@@ -167,7 +168,7 @@ struct StoolsRecordView: View {
             realm.delete(allRecords)
         }
         print("All StoolRecordModel data have been deleted.")
-        dismiss() // 削除後シートを閉じる
+//        dismiss() // 削除後シートを閉じる
     }
     
     // 日付フォーマット (デバッグ用)
@@ -207,19 +208,52 @@ struct StoolRecordListView: View {
         )
     }
     
+    let stoolTypes = [
+        (id: 1, label: "硬便", image: "1"),
+        (id: 2, label: "普通便", image: "2"),
+        (id: 3, label: "軟便", image: "3"),
+        (id: 4, label: "下痢", image: "4"),
+        (id: 5, label: "便秘", image: "5"),
+        (id: 6, label: "血便", image: "6")
+    ]
+    
     var body: some View {
         NavigationView {
-            List {
-                ForEach(recordsForDate) { record in
-                    HStack {
-                        Text(record.date, style: .time) // 時間表示
-                        Spacer()
-                        Text(record.readableStoolTypes().joined(separator: ", "))
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(recordsForDate) { record in
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(Color.black, lineWidth: 0.5)
+                                .fill(Color.gray.opacity(0.1))
+                                .frame(height: 80)
+                            HStack(spacing: -3) {
+                                Text("\(record.times)")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.gray.opacity(0.5))
+                                    .frame(width: 45, alignment: .leading)
+                                    .padding(.horizontal)
+                                ForEach(stoolTypes, id: \.id) { types in
+                                    VStack {
+                                        Image(types.image)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 25, height: 25)
+                                        Text(types.label)
+                                            .font(.system(size: 10))
+                                    }
+                                    .padding(.horizontal, 6)
+                                }
+                                Text(record.date, style: .time)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.horizontal, 20)
+                            }
+                            .padding(.horizontal)
+                        }
                     }
+                    .onDelete(perform: deleteRecord)
                 }
-                .onDelete(perform: deleteRecord)
+                .padding()
             }
             .navigationTitle("\(formatDateOnly(selectedDate)) の記録")
             .navigationBarItems(trailing: EditButton())

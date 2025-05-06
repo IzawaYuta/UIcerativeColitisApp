@@ -17,20 +17,15 @@ struct ToDayView: View {
     //    @ObservedResults(DateData.self) var dateDataList
     @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
     
-    private var stoolRecordCountForSelectedDate: Int {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
-            return 0
-        }
-        let realm = try! Realm()
-        // 選択された日付の範囲でフィルタリングしてカウント
-        return realm.objects(StoolRecordModel.self)
-            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
-            .count
-    }
+    let stoolTypesInfo = [
+        (id: 1, label: "硬便", image: "1"),
+        (id: 2, label: "普通便", image: "2"),
+        (id: 3, label: "軟便", image: "3"),
+        (id: 4, label: "下痢", image: "4"),
+        (id: 5, label: "便秘", image: "5"),
+        (id: 6, label: "血便", image: "6")
+    ]
     
-    // --- UI ---
     var body: some View {
         VStack(spacing: 30) {
             HStack {
@@ -45,78 +40,70 @@ struct ToDayView: View {
             }
             .padding(.top)
             
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.blue.opacity(0.1))
-                
-                HStack(spacing: 20) {
-                    Spacer()
-                    
-                    Button {
-                        showStoolsRecordView = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundColor(.blue)
-                    }
-                    .sheet(isPresented: $showStoolsRecordView) {
-                        // StoolsRecordViewに選択中の日付を渡す
-                        StoolsRecordView(selectedDate: date)
-                            .presentationDetents([.medium, .large])
-                    }
-                    
-                    Spacer() // 中央スペース
-                    
-                    // 回数表示
-                    VStack {
-                        Text("記録回数")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text("\(stoolRecordCountForSelectedDate)")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.primary)
-                            .id(date)
-                    }
-                    
-                    
-                    Spacer()
+            VStack(spacing: 10) {
+                Button {
+                    showStoolsRecordView = true
+                } label: {
+                    Label("記録を追加", systemImage: "plus.circle.fill")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 20)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
                 }
-                .padding(.vertical)
+                .sheet(isPresented: $showStoolsRecordView) {
+                    StoolsRecordView(selectedDate: date)
+                        .presentationDetents([.medium, .large])
+                }
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.blue.opacity(0.1))
+                    
+                    HStack(spacing: 15) {
+                        VStack {
+                            Text("記録回数")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("\(stoolRecordCountForSelectedDate)")
+                                .font(.title2.weight(.bold))
+                                .foregroundColor(.primary)
+                                .id("total_\(date)")
+                        }
+                        .frame(minWidth: 60, alignment: .center)
+                        
+                        Divider().frame(height: 40)
+                        
+                        HStack(spacing: 8) {
+                            let counts = stoolTypeCountsForSelectedDate
+                            
+                            ForEach(stoolTypesInfo, id: \.id) { typeInfo in
+                                let count = counts[typeInfo.id] ?? 0
+                                VStack(spacing: 3) {
+                                    Image(typeInfo.image)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 25, height: 25)
+                                        .opacity(count > 0 ? 1.0 : 0.3)
+                                    
+                                    Text("\(count)")
+                                        .font(.footnote.weight(count > 0 ? .semibold : .regular))
+                                        .foregroundColor(count > 0 ? .primary : .secondary)
+                                }
+                                .frame(minWidth: 30)
+                            }
+                        }
+                        .id("types_\(date)")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                }
+                .frame(height: 85)
+                .padding(.horizontal) 
             }
-            .frame(height: 80)
-            .padding(.horizontal)
             
-            // --- (オプション) StoolsCountView を使う場合 ---
-            /*
-             ZStack {
-             RoundedRectangle(cornerRadius: 15)
-             .fill(Color.gray.secondary)
-             HStack {
-             // ... 追加ボタンなど ...
-             StoolsCountView(
-             displayCount: legacyCount, // DateData のカウント
-             plusButton: {
-             let newCount = legacyCount + 1
-             saveDateDataCount(count: newCount)
-             self.legacyCount = newCount
-             },
-             minusButton: {
-             if legacyCount > 0 {
-             let newCount = legacyCount - 1
-             saveDateDataCount(count: newCount)
-             self.legacyCount = newCount
-             }
-             }
-             )
-             }
-             }
-             .frame(height: 60)
-             .padding(.horizontal)
-             */
-            
-            // --- (オプション) 記録リスト表示 ---
-            // List { ... }
-            
-            Spacer() // 全体を上に寄せる
+            Spacer()
         }
         // .onAppear {
         //     // DateDataのカウントをロードする場合
@@ -174,6 +161,52 @@ struct ToDayView: View {
      }
      }
      */
+    
+    private var stoolRecordCountForSelectedDate: Int {
+        calculateStoolCounts().total
+    }
+    
+    // 選択日の各便タイプ別回数
+    private var stoolTypeCountsForSelectedDate: [Int: Int] {
+        calculateStoolCounts().typeCounts
+    }
+    
+//    private var stoolRecordCountForSelectedDate: Int {
+//        let calendar = Calendar.current
+//        let startOfDay = calendar.startOfDay(for: date)
+//        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+//            return 0
+//        }
+//        let realm = try! Realm()
+//        // 選択された日付の範囲でフィルタリングしてカウント
+//        return realm.objects(StoolRecordModel.self)
+//            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
+//            .count
+//    }
+    
+    private func calculateStoolCounts() -> (total: Int, typeCounts: [Int: Int]) {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            return (total: 0, typeCounts: [:])
+        }
+        let realm = try! Realm()
+        
+        let records = realm.objects(StoolRecordModel.self)
+            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
+        
+        var counts: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0] // 初期化
+        for record in records {
+            for typeId in record.stoolTypes {
+                // 定義されているタイプIDのみカウント
+                if counts.keys.contains(typeId) {
+                    counts[typeId]? += 1
+                }
+            }
+        }
+        // 総数は records.count で良い
+        return (total: records.count, typeCounts: counts)
+    }
 }
 
 // --- DatePickerを別Viewに分離 (推奨) ---
