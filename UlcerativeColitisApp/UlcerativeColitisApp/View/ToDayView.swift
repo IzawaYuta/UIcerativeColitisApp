@@ -29,7 +29,7 @@ struct ToDayView: View {
     var body: some View {
         VStack(spacing: 30) {
             HStack {
-                Text(date, style: .date)
+                Text(formattedDate)
                     .padding(.horizontal)
                     .font(.system(size: 28, weight: .bold))
                     .onTapGesture { showDatePicker = true }
@@ -184,6 +184,12 @@ struct ToDayView: View {
 //            .count
 //    }
     
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+    
     private func calculateStoolCounts() -> (total: Int, typeCounts: [Int: Int]) {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
@@ -195,27 +201,24 @@ struct ToDayView: View {
         let records = realm.objects(StoolRecordModel.self)
             .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
         
-        var counts: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0] // 初期化
+        var counts: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0]
         for record in records {
             for typeId in record.stoolTypes {
-                // 定義されているタイプIDのみカウント
                 if counts.keys.contains(typeId) {
                     counts[typeId]? += 1
                 }
             }
         }
-        // 総数は records.count で良い
         return (total: records.count, typeCounts: counts)
     }
 }
 
-// --- DatePickerを別Viewに分離 (推奨) ---
 struct DatePickerSheet: View {
     @Binding var selectedDate: Date
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        NavigationView { // タイトルと完了ボタンのため
+        NavigationView {
             VStack {
                 DatePicker("日付選択", selection: $selectedDate, displayedComponents: .date)
                     .datePickerStyle(GraphicalDatePickerStyle())
