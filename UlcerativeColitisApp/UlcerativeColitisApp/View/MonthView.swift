@@ -1,5 +1,5 @@
 //
-//  View2.swift
+//  MonthView.swift
 //  UlcerativeColitisApp
 //
 //  Created by Engineer MacBook Air on 2025/04/27.
@@ -8,7 +8,7 @@
 import SwiftUI
 import RealmSwift
 
-struct View2: View {
+struct MonthView: View {
     
     @ObservedResults(DateData.self) var dateDataList
     var filteredData: [DateData] {
@@ -58,8 +58,8 @@ struct View2: View {
             HStack(spacing: 50) {
                 ZStack(alignment: .center) {
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.black, lineWidth: 2)
-                        .fill(Color.gray.secondary)
+                        .stroke(Color.black, lineWidth: 1)
+                        .fill(Color.gray.opacity(0.3))
                         .frame(width: 150, height: 150)
                     HStack {
                         VStack(alignment: .trailing, spacing: -3) {
@@ -377,5 +377,5 @@ struct DayCell: View {
     }
 }
 #Preview {
-    View2()
+    MonthView()
 }

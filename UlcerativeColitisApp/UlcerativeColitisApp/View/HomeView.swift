@@ -57,7 +57,7 @@ struct HomeView: View {
         case .option1:
             ToDayView()
         case .option2:
-            View2()
+            MonthView()
         }
     }
 }

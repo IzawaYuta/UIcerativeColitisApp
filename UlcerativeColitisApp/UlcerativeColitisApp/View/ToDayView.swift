@@ -12,10 +12,14 @@ struct ToDayView: View {
     
     @State private var date = Date()
     @State private var showDatePicker = false
-    @State private var count: Int = 0
+//    @State private var count: Int = 0
     @State private var showStoolsRecordView = false
     //    @ObservedResults(DateData.self) var dateDataList
-    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
+//    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
+    @ObservedResults(
+        StoolRecordModel.self,
+        sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)
+    ) var allStoolRecords
     
     let stoolTypesInfo = [
         (id: 1, label: "硬便", image: "1"),
@@ -35,71 +39,72 @@ struct ToDayView: View {
                     .onTapGesture { showDatePicker = true }
                     .sheet(isPresented: $showDatePicker) {
                         DatePickerSheet(selectedDate: $date)
+                            .presentationDetents([.height(450)])
                     }
                 Spacer()
             }
             .padding(.top)
             
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.blue.opacity(0.1))
-                    
-                    HStack(spacing: 15) {
-                        Button(action: {
-                            showStoolsRecordView = true
-                        }) {
-                            Image(systemName: "plus")
-                        }
-                        .font(.system(size: 15))
-                        .frame(width: 30, height: 30)
-                        .foregroundColor(.white)
-                        .background(Color.blue)
-                        .clipShape(Capsule())
-                        .sheet(isPresented: $showStoolsRecordView) {
-                            StoolsRecordView(selectedDate: date)
-                                .presentationDetents([.medium, .large])
-                        }
-//                        Divider().frame(height: 10)
-                        VStack {
-                            
-                            Text("\(stoolRecordCountForSelectedDate)")
-                                .font(.title.weight(.bold))
-                                .foregroundColor(.primary)
-                                .id("total_\(date)")
-                            Text("排便回数")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(minWidth: 60, alignment: .center)
-                        
-                        Divider().frame(height: 40)
-                        
-                        HStack(spacing: 8) {
-                            let counts = stoolTypeCountsForSelectedDate
-                            
-                            ForEach(stoolTypesInfo, id: \.id) { typeInfo in
-                                let count = counts[typeInfo.id] ?? 0
-                                VStack(spacing: 3) {
-                                    Image(typeInfo.image)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 25, height: 25)
-                                        .opacity(count > 0 ? 1.0 : 0.3)
-                                    
-                                    Text("\(count)")
-                                        .font(.footnote.weight(count > 0 ? .semibold : .regular))
-                                        .foregroundColor(count > 0 ? .primary : .secondary)
-                                }
-                                .frame(minWidth: 30)
-                            }
-                        }
-                        .id("types_\(date)")
+            ZStack {
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.blue.opacity(0.1))
+                
+                HStack(spacing: 15) {
+                    Button(action: {
+                        showStoolsRecordView = true
+                    }) {
+                        Image(systemName: "plus")
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, 10)
+                    .font(.system(size: 15))
+                    .frame(width: 30, height: 30)
+                    .foregroundColor(.white)
+                    .background(Color.blue)
+                    .clipShape(Capsule())
+                    .sheet(isPresented: $showStoolsRecordView) {
+                        StoolsRecordView(selectedDate: date)
+                            .presentationDetents([.medium, .large])
+                    }
+                    //                        Divider().frame(height: 10)
+                    VStack {
+                        
+                        Text("\(stoolRecordCountForSelectedDate)")
+                            .font(.title.weight(.bold))
+                            .foregroundColor(.primary)
+//                            .id("total_\(date)")
+                        Text("排便回数")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(minWidth: 60, alignment: .center)
+                    
+                    Divider().frame(height: 40)
+                    
+                    HStack(spacing: 8) {
+                        let counts = stoolTypeCountsForSelectedDate
+                        
+                        ForEach(stoolTypesInfo, id: \.id) { typeInfo in
+                            let count = counts[typeInfo.id] ?? 0
+                            VStack(spacing: 3) {
+                                Image(typeInfo.image)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 25, height: 25)
+                                    .opacity(count > 0 ? 1.0 : 0.3)
+                                
+                                Text("\(count)")
+                                    .font(.footnote.weight(count > 0 ? .semibold : .regular))
+                                    .foregroundColor(count > 0 ? .primary : .secondary)
+                            }
+                            .frame(minWidth: 30)
+                        }
+                    }
+                    .id("types_\(date)")
                 }
-                .frame(height: 85)
                 .padding(.horizontal)
+                .padding(.vertical, 10)
+            }
+            .frame(height: 85)
+            .padding(.horizontal)
             
             Spacer()
         }
@@ -160,27 +165,27 @@ struct ToDayView: View {
      }
      */
     
-    private var stoolRecordCountForSelectedDate: Int {
-        calculateStoolCounts().total
-    }
-    
-    // 選択日の各便タイプ別回数
-    private var stoolTypeCountsForSelectedDate: [Int: Int] {
-        calculateStoolCounts().typeCounts
-    }
-    
 //    private var stoolRecordCountForSelectedDate: Int {
-//        let calendar = Calendar.current
-//        let startOfDay = calendar.startOfDay(for: date)
-//        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
-//            return 0
-//        }
-//        let realm = try! Realm()
-//        // 選択された日付の範囲でフィルタリングしてカウント
-//        return realm.objects(StoolRecordModel.self)
-//            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
-//            .count
+//        calculateStoolCounts().total
 //    }
+//    
+//    // 選択日の各便タイプ別回数
+//    private var stoolTypeCountsForSelectedDate: [Int: Int] {
+//        calculateStoolCounts().typeCounts
+//    }
+    
+    //    private var stoolRecordCountForSelectedDate: Int {
+    //        let calendar = Calendar.current
+    //        let startOfDay = calendar.startOfDay(for: date)
+    //        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+    //            return 0
+    //        }
+    //        let realm = try! Realm()
+    //        // 選択された日付の範囲でフィルタリングしてカウント
+    //        return realm.objects(StoolRecordModel.self)
+    //            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
+    //            .count
+    //    }
     
     private var formattedDate: String {
         let formatter = DateFormatter()
@@ -208,6 +213,38 @@ struct ToDayView: View {
             }
         }
         return (total: records.count, typeCounts: counts)
+    }
+    
+    private var recordsForSelectedDate: Results<StoolRecordModel> {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        // 次の日の開始時刻を計算 (その日の終わりとするため < endOfDay で比較)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            // エラーケース: 空のResultsを返す (実際にはこのエラーは発生しにくい)
+            // NSPredicate(value: false) を使うことで空のResultsを意図的に作る
+            return allStoolRecords.filter(NSPredicate(value: false))
+        }
+        
+        // Realmのwhere句を使ってフィルタリング
+        return allStoolRecords.where {
+            $0.date >= startOfDay && $0.date < endOfDay
+        }
+    }
+    
+    private var stoolRecordCountForSelectedDate: Int {
+        recordsForSelectedDate.count
+    }
+    
+    private var stoolTypeCountsForSelectedDate: [Int: Int] {
+        var counts: [Int: Int] = Dictionary(uniqueKeysWithValues: stoolTypesInfo.map { ($0.id, 0) }) // 初期化
+        for record in recordsForSelectedDate {
+            for typeId in record.stoolTypes {
+                if counts.keys.contains(typeId) {
+                    counts[typeId]? += 1
+                }
+            }
+        }
+        return counts
     }
 }
 
