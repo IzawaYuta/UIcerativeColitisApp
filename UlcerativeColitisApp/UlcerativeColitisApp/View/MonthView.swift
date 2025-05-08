@@ -39,13 +39,24 @@ struct MonthView: View {
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .frame(height: 200)
             
+            Divider()
+                .background(Color.red)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 45)
+//            ↑どちらか使う↓
+//            Rectangle()
+//                .fill(Color.red)
+//                .frame(maxWidth: .infinity)
+//                .frame(height: 0.5)
+//                .padding(.horizontal, 45)
             
             HStack(spacing: 50) {
                 ZStack(alignment: .center) {
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.black, lineWidth: 1)
-                        .fill(Color.gray.opacity(0.3))
+                    //                        .stroke(Color.black, lineWidth: 1)
+                    //                        .fill(Color.gray.opacity(0.3))
                         .frame(width: 150, height: 150)
+                        .viewStyleView()
                     HStack {
                         VStack(alignment: .trailing, spacing: -3) {
                             Text("ToDay")
@@ -77,7 +88,6 @@ struct MonthView: View {
                     .fill(Color.gray.secondary)
                     .frame(width: 150, height: 150)
             }
-
             
             Spacer()
         }
