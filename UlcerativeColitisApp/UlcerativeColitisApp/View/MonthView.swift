@@ -17,6 +17,7 @@ struct MonthView: View {
     
     @State private var currentDate: Date = Date()
     @State private var selectedDate: Date? = nil
+    @State private var displayedMonths: [Int] = [-1, 0, 1]
     
     private let calendar = Calendar.current
     
@@ -27,7 +28,7 @@ struct MonthView: View {
             WeekdayLabelsView()
             
             TabView(selection: $currentDate) {
-                ForEach([-1, 0, 1], id: \.self) { monthOffset in
+                ForEach(displayedMonths, id: \.self) { monthOffset in
                     let monthDate = calendar.date(byAdding: .month, value: monthOffset, to: startOfMonth(date: Date()))!
                     MonthDaysGridView(
                         monthDate: monthDate,
@@ -37,6 +38,13 @@ struct MonthView: View {
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            .onChange(of: currentDate) { newDate in
+                withAnimation {
+                    // 前後の月にスライドしたらリストを更新
+                    let currentMonthOffset = calendar.dateComponents([.month], from: startOfMonth(date: Date()), to: newDate).month ?? 0
+                    displayedMonths = [currentMonthOffset - 1, currentMonthOffset, currentMonthOffset + 1]
+                }
+            }
             .frame(height: 200)
             
             Divider()
@@ -51,7 +59,7 @@ struct MonthView: View {
 //                .padding(.horizontal, 45)
             
             HStack(spacing: 50) {
-                ZStack(alignment: .center) {
+                ZStack {
                     RoundedRectangle(cornerRadius: 10)
                     //                        .stroke(Color.black, lineWidth: 1)
                     //                        .fill(Color.gray.opacity(0.3))
@@ -193,7 +201,6 @@ struct MonthDaysGridView: View {
         }
         .padding(.horizontal, 5) // グリッド全体の左右パディング
         // .id(monthDate) // Viewの識別子 (TabViewがこれを認識するために重要)
-        // -> TabViewの.tag()を使うのでここでは不要かも
     }
     
     // MARK: - Helper Functions for Grid
@@ -267,7 +274,7 @@ struct DayCell: View {
                 .clipShape(Circle())
                 .overlay(
                     Circle()
-                        .stroke(isToday ? Color.blue : Color.clear, lineWidth: 1.5)
+                        .fill(isToday ? Color.blue.opacity(0.3) : Color.clear)
                 )
         }
     }
@@ -277,7 +284,7 @@ struct DayCell: View {
         if isSelected {
             return .white
         } else if isToday {
-            return .blue
+            return .primary
         } else {
             return .primary
         }
