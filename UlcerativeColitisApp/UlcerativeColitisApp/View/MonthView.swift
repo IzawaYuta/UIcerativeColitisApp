@@ -10,13 +10,14 @@ import RealmSwift
 
 struct MonthView: View {
     
-    @ObservedResults(DateData.self) var dateDataList
-    var filteredData: [DateData] {
-        dateDataList.filter { isSameDay($0.date, selectedDate ?? Date()) }
-    }
+    @ObservedResults(StoolRecordModel.self)  var stoolRecordModel
+    
+//    var filteredData: [StoolRecordModel] {
+//        stoolRecordModel.filter { isSameDay($0.date, selectedDate ?? Date()) }
+//    }
     
     @State private var currentDate: Date = Date()
-    @State private var selectedDate: Date? = nil
+    @State private var selectedDate: Date? = Date()
     @State private var displayedMonths: [Int] = [-1, 0, 1]
     
     private let calendar = Calendar.current
@@ -51,34 +52,28 @@ struct MonthView: View {
                 .background(Color.red)
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 45)
-//            ↑どちらか使う↓
-//            Rectangle()
-//                .fill(Color.red)
-//                .frame(maxWidth: .infinity)
-//                .frame(height: 0.5)
-//                .padding(.horizontal, 45)
+            //            ↑どちらか使う↓
+            //            Rectangle()
+            //                .fill(Color.red)
+            //                .frame(maxWidth: .infinity)
+            //                .frame(height: 0.5)
+            //                .padding(.horizontal, 45)
             
             HStack(spacing: 50) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
-                    //                        .stroke(Color.black, lineWidth: 1)
-                    //                        .fill(Color.gray.opacity(0.3))
                         .frame(width: 150, height: 150)
                         .viewStyleView()
                     HStack {
-                        VStack(alignment: .trailing, spacing: -3) {
-                            Text("ToDay")
-                                .font(.system(size: 20))
-                            ZStack {
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.05))
-                                Image("Image")
-                                    .resizable()
-                            }
-                            .frame(width: 40, height: 40)
+                        ZStack {
+                            Rectangle()
+                                .fill(Color.white.opacity(0.05))
+                            Image("Image")
+                                .resizable()
                         }
+                        .frame(width: 40, height: 40)
                         .offset(x: -3, y: 32)
-                        if let stoolsCount = dateDataList.filter({ isSameDay($0.date, selectedDate ?? Date()) }).first?.stoolsCount {
+                        if let stoolsCount = stoolRecordModel.filter({ isSameDay($0.date, selectedDate ?? Date()) }).first?.times {
                             Text("\(stoolsCount)")
                                 .font(.system(size: 70))
                                 .bold()
@@ -272,9 +267,9 @@ struct DayCell: View {
                 .foregroundColor(textColor)
                 .background(backgroundView)
                 .clipShape(Circle())
-                .overlay(
+                .background(
                     Circle()
-                        .fill(isToday ? Color.blue.opacity(0.3) : Color.clear)
+                        .fill(isToday ? Color.gray : Color.clear)
                 )
         }
     }
@@ -284,7 +279,7 @@ struct DayCell: View {
         if isSelected {
             return .white
         } else if isToday {
-            return .primary
+            return .white
         } else {
             return .primary
         }

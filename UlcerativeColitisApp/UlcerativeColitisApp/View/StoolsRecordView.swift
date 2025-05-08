@@ -117,21 +117,18 @@ struct StoolsRecordView: View {
     }
     
     private func saveStoolRecord() {
-        guard !selectedStoolTypes.isEmpty else { return }
-        
-        let realm = try! Realm()
-        
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: selectedDate)
-        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
-            print("Error: Could not calculate date range for counting.")
+        guard !selectedStoolTypes.isEmpty else {
+            print("No stool types selected.")
             return
         }
         
-        let existingRecordsCount = realm.objects(StoolRecordModel.self)
-            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
-            .count
+        let realm = try! Realm()
+        let calendar = Calendar.current
         
+        // 1. 記録対象の日付の開始時刻を特定
+        let startOfDayForSelectedDate = calendar.startOfDay(for: selectedDate)
+        
+        // 今回の記録時刻 (finalRecordDateTime) を準備
         let dateComponents = calendar.dateComponents([.year, .month, .day], from: selectedDate)
         let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: recordTime)
         var combinedComponents = DateComponents()
@@ -140,25 +137,51 @@ struct StoolsRecordView: View {
         combinedComponents.day = dateComponents.day
         combinedComponents.hour = timeComponents.hour
         combinedComponents.minute = timeComponents.minute
-        combinedComponents.second = timeComponents.second
+        combinedComponents.second = timeComponents.second // 秒も記録する場合
         guard let finalRecordDateTime = calendar.date(from: combinedComponents) else {
-            print("Error: Could not combine date and time.")
+            print("Error: Could not combine date and time for the record.")
             return
         }
         
-        let newRecord = StoolRecordModel()
-        newRecord.date = finalRecordDateTime
-        newRecord.times = existingRecordsCount + 1
-        let sortedSelectedTypes = Array(selectedStoolTypes).sorted()
-        newRecord.stoolTypes.append(objectsIn: sortedSelectedTypes)
+        guard let endOfDayForSelectedDate = calendar.date(byAdding: .day, value: 1, to: startOfDayForSelectedDate) else {
+            print("Error: Could not calculate end of day.")
+            return
+        }
+        
+        let existingRecordForDay = realm.objects(StoolRecordModel.self)
+            .filter("date >= %@ AND date < %@",
+                    startOfDayForSelectedDate as NSDate,
+                    endOfDayForSelectedDate as NSDate)
+            .first
         
         try! realm.write {
-            realm.add(newRecord)
+            if let recordToUpdate = existingRecordForDay {
+                print("Updating existing record for \(formatDate(recordToUpdate.date))")
+                recordToUpdate.stoolTimes.append(finalRecordDateTime)
+                
+                let sortedSelectedTypes = Array(selectedStoolTypes).sorted()
+                recordToUpdate.stoolTypes.append(objectsIn: sortedSelectedTypes)
+                recordToUpdate.times = recordToUpdate.stoolTimes.count
+                
+                print("Record updated. New times: \(recordToUpdate.times), Stool times count: \(recordToUpdate.stoolTimes.count)")
+                
+            } else {
+                print("Creating new record for \(formatDate(startOfDayForSelectedDate))")
+                let newRecord = StoolRecordModel()
+                newRecord.date = startOfDayForSelectedDate
+                newRecord.stoolTimes.append(finalRecordDateTime)
+                
+                let sortedSelectedTypes = Array(selectedStoolTypes).sorted()
+                newRecord.stoolTypes.append(objectsIn: sortedSelectedTypes)
+                
+                newRecord.times = 1
+                
+                realm.add(newRecord)
+                print("New record saved. Times: \(newRecord.times), Stool times count: \(newRecord.stoolTimes.count)")
+            }
         }
         selectedStoolTypes = []
-        print("Saved new stool record #\(newRecord.times) for \(formatDate(finalRecordDateTime)) with types: \(selectedStoolTypes)")
     }
-
     
     // 全データ削除 (必要に応じて)
     private func resetAllStoolData() {

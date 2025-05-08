@@ -35,7 +35,6 @@ class StoolRecordModel: Object, Identifiable {
     @Persisted var stoolTimes: List<Date> // 便をした時間のリスト
     @Persisted var stoolTypes: List<Int> // 便の種類（1〜6の整数で管理）
     
-    // 便の種類を人間が読みやすい形に変換するヘルパー
     func readableStoolTypes() -> [String] {
         let typeDescriptions = [
             1: "硬便",

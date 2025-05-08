@@ -129,64 +129,6 @@ struct ToDayView: View {
         // }
     }
     
-    // --- (オプション) DateData用の関数 ---
-    /*
-     private func saveDateDataCount(count newCount: Int) {
-     let targetDateStart = Calendar.current.startOfDay(for: date)
-     let realm = try! Realm()
-     let config = Realm.Configuration.defaultConfiguration // 必要に応じて設定を取得
-     
-     // メインスレッド以外から Realm を使う場合は明示的にインスタンス化
-     // let realm = try! Realm(configuration: config)
-     
-     let existingData = realm.objects(DateData.self).filter("date == %@", targetDateStart).first
-     
-     try! realm.write {
-     if let dataToUpdate = existingData?.thaw() { // thaw() で Frozen -> Live
-     guard !dataToUpdate.isInvalidated else { return }
-     dataToUpdate.stoolsCount = newCount
-     } else {
-     let newData = DateData()
-     newData.date = targetDateStart
-     newData.stoolsCount = newCount
-     realm.add(newData, update: .modified) // 主キーがあるので modified を使う
-     }
-     }
-     }
-     
-     private func loadDateDataCount(for targetDate: Date) {
-     let targetDateStart = Calendar.current.startOfDay(for: targetDate)
-     let realm = try! Realm()
-     let specificData = realm.objects(DateData.self).filter("date == %@", targetDateStart).first
-     
-     DispatchQueue.main.async {
-     self.legacyCount = specificData?.stoolsCount ?? 0
-     }
-     }
-     */
-    
-//    private var stoolRecordCountForSelectedDate: Int {
-//        calculateStoolCounts().total
-//    }
-//    
-//    // 選択日の各便タイプ別回数
-//    private var stoolTypeCountsForSelectedDate: [Int: Int] {
-//        calculateStoolCounts().typeCounts
-//    }
-    
-    //    private var stoolRecordCountForSelectedDate: Int {
-    //        let calendar = Calendar.current
-    //        let startOfDay = calendar.startOfDay(for: date)
-    //        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
-    //            return 0
-    //        }
-    //        let realm = try! Realm()
-    //        // 選択された日付の範囲でフィルタリングしてカウント
-    //        return realm.objects(StoolRecordModel.self)
-    //            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
-    //            .count
-    //    }
-    
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -232,7 +174,11 @@ struct ToDayView: View {
     }
     
     private var stoolRecordCountForSelectedDate: Int {
-        recordsForSelectedDate.count
+        if let recordForDay = recordsForSelectedDate.first {
+            return recordForDay.times
+        } else {
+            return 0
+        }
     }
     
     private var stoolTypeCountsForSelectedDate: [Int: Int] {
@@ -292,3 +238,63 @@ struct DatePickerSheet: View {
 #Preview {
     ToDayView()
 }
+
+
+
+// --- (オプション) DateData用の関数 ---
+/*
+ private func saveDateDataCount(count newCount: Int) {
+ let targetDateStart = Calendar.current.startOfDay(for: date)
+ let realm = try! Realm()
+ let config = Realm.Configuration.defaultConfiguration // 必要に応じて設定を取得
+ 
+ // メインスレッド以外から Realm を使う場合は明示的にインスタンス化
+ // let realm = try! Realm(configuration: config)
+ 
+ let existingData = realm.objects(DateData.self).filter("date == %@", targetDateStart).first
+ 
+ try! realm.write {
+ if let dataToUpdate = existingData?.thaw() { // thaw() で Frozen -> Live
+ guard !dataToUpdate.isInvalidated else { return }
+ dataToUpdate.stoolsCount = newCount
+ } else {
+ let newData = DateData()
+ newData.date = targetDateStart
+ newData.stoolsCount = newCount
+ realm.add(newData, update: .modified) // 主キーがあるので modified を使う
+ }
+ }
+ }
+ 
+ private func loadDateDataCount(for targetDate: Date) {
+ let targetDateStart = Calendar.current.startOfDay(for: targetDate)
+ let realm = try! Realm()
+ let specificData = realm.objects(DateData.self).filter("date == %@", targetDateStart).first
+ 
+ DispatchQueue.main.async {
+ self.legacyCount = specificData?.stoolsCount ?? 0
+ }
+ }
+ */
+
+//    private var stoolRecordCountForSelectedDate: Int {
+//        calculateStoolCounts().total
+//    }
+//
+//    // 選択日の各便タイプ別回数
+//    private var stoolTypeCountsForSelectedDate: [Int: Int] {
+//        calculateStoolCounts().typeCounts
+//    }
+
+//    private var stoolRecordCountForSelectedDate: Int {
+//        let calendar = Calendar.current
+//        let startOfDay = calendar.startOfDay(for: date)
+//        guard let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+//            return 0
+//        }
+//        let realm = try! Realm()
+//        // 選択された日付の範囲でフィルタリングしてカウント
+//        return realm.objects(StoolRecordModel.self)
+//            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
+//            .count
+//    }
