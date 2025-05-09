@@ -24,7 +24,7 @@ struct HomeView: View {
                     Text(item.rawValue)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 2)
-                        .foregroundColor(select == item ? .black : .white)
+                        .foregroundColor(select == item ? .white : .white.opacity(0.6))
                         .matchedGeometryEffect(id: item, in: segmentControl)
                         .onTapGesture {
                             withAnimation {
@@ -36,11 +36,13 @@ struct HomeView: View {
             .frame(height: 20)
             .padding(6)
             .background(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.gray.opacity(0.8))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.white)
+                        RoundedRectangle(cornerRadius: 11)
+                            .fill(Color.black)
                             .matchedGeometryEffect(id: select, in: segmentControl,  isSource: false)
+                            .shadow(color: .black.opacity(0.6), radius: 2, x: 0.5, y: 0.5)
                     )
             )
             Spacer()
