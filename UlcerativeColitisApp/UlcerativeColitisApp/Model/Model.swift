@@ -47,3 +47,10 @@ class StoolRecordModel: Object, Identifiable {
         return stoolTypes.compactMap { typeDescriptions[$0] }
     }
 }
+
+//MARK: メモ
+class MemoModel: Object, Identifiable {
+    @Persisted(primaryKey: true) var id: ObjectId // 一意の識別子
+    @Persisted var date: Date // 日付
+    @Persisted var memo: String = "" // メモ
+}

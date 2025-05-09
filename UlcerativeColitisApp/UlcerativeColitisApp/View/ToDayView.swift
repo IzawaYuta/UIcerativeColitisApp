@@ -14,12 +14,15 @@ struct ToDayView: View {
     @State private var showDatePicker = false
 //    @State private var count: Int = 0
     @State private var showStoolsRecordView = false
+    @State private var newMemoTextField: String = ""
+    @Binding var selectedDate: Date
     //    @ObservedResults(DateData.self) var dateDataList
 //    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
     @ObservedResults(
         StoolRecordModel.self,
         sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)
     ) var allStoolRecords
+    @ObservedResults(MemoModel.self) var memoModel
     
     let stoolTypesInfo = [
         (id: 1, label: "硬便", image: "1"),
@@ -29,6 +32,10 @@ struct ToDayView: View {
         (id: 5, label: "便秘", image: "5"),
         (id: 6, label: "血便", image: "6")
     ]
+    
+    var filteredMemos: [MemoModel] {
+        memoModel.filter { isSameDay($0.date, date) }
+    }
     
     var body: some View {
         VStack(spacing: 30) {
@@ -44,6 +51,9 @@ struct ToDayView: View {
                 Spacer()
             }
             .padding(.top)
+            .onChange(of: date) { _ in // 日付が変更されたらメモをロード
+                loadMemoForSelectedDate()
+            }
             
             ZStack {
                 RoundedRectangle(cornerRadius: 15)
@@ -106,27 +116,21 @@ struct ToDayView: View {
             .frame(height: 85)
             .padding(.horizontal)
             
+            ZStack {
+                TextField("メモ", text: $newMemoTextField)
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
+                    .font(.system(size: 16, weight: .regular, design: .default))
+                    .padding(.horizontal, 20)
+                    .onSubmit {
+                        saveMemo()
+                    }
+            }
             Spacer()
         }
-        // .onAppear {
-        //     // DateDataのカウントをロードする場合
-        //     // loadDateDataCount(for: date)
-        // }
-        .onChange(of: date) { newDate in
-            // 日付が変わったときにDateDataのカウントを再ロードする場合
-            // loadDateDataCount(for: newDate)
-            // stoolRecordCountForSelectedDate は自動的に再計算される
-            print("Date changed to: \(newDate)")
+        .onAppear { // ビューが最初に表示されたときにメモをロード
+            loadMemoForSelectedDate()
         }
-        // StoolsRecordViewが閉じたときにカウントが更新されるように、
-        // stoolRecordCountForSelectedDate の再評価をトリガーする必要がある場合がある
-        // SwiftUIが自動で検知してくれることが多いが、もし更新されない場合は
-        // ダミーのState変更などでViewの再描画を促す
-        // .onChange(of: showStoolsRecordView) { isPresented in
-        //     if !isPresented {
-        //         // ここでダミーStateを更新するなどしてViewを再描画させる
-        //     }
-        // }
     }
     
     private var formattedDate: String {
@@ -192,6 +196,43 @@ struct ToDayView: View {
         }
         return counts
     }
+    
+    func saveMemo() {
+        // Realmに保存
+        let realm = try! Realm()
+        let thaw = memoModel.thaw()
+        if let existingRecord = thaw?.filter({ isSameDay($0.date, date) }).first {
+            // 既存データを更新
+            try! realm.write {
+                existingRecord.memo = newMemoTextField
+            }
+        } else {
+            // 新規データを追加
+            let newRecord = MemoModel()
+            newRecord.date = date
+            newRecord.memo = newMemoTextField
+            
+            try! realm.write {
+                realm.add(newRecord)
+            }
+        }
+    }
+    
+    func loadMemoForSelectedDate() {
+        // selectedDate と同じ日付のメモを検索
+        if let existingRecord = memoModel.filter({ isSameDay($0.date, date) }).first {
+            // 既存のメモがあればTextFieldに表示
+            newMemoTextField = existingRecord.memo
+        } else {
+            // なければTextFieldを空にする
+            newMemoTextField = ""
+        }
+    }
+    
+    // 同じ日かどうかを判定
+    func isSameDay(_ date1: Date, _ date2: Date) -> Bool {
+        Calendar.current.isDate(date1, inSameDayAs: date2)
+    }
 }
 
 struct DatePickerSheet: View {
@@ -236,7 +277,7 @@ struct DatePickerSheet: View {
  }
  */
 #Preview {
-    ToDayView()
+    ToDayView(selectedDate: .constant(Date()))
 }
 
 
