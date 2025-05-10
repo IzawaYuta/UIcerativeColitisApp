@@ -19,6 +19,9 @@ struct MainTabView: View {
             Tab("2", systemImage: "plus") {
                 StoolsRecordView(selectedDate: Date())
             }
+            Tab("3", systemImage: "plus") {
+                ChartsView()
+            }
         }
     }
 }
