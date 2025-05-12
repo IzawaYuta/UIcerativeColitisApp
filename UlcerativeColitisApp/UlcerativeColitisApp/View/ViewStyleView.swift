@@ -30,7 +30,7 @@ struct ViewStyleView: ViewModifier {
         } else {
             content
                 .foregroundStyle(.BG)
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 10, y: 10)
+                .shadow(color: .black.opacity(0.2), radius: 5, x: 10, y: 10)
                 .overlay {
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .stroke(LinearGradient(gradient: Gradient(colors: [.TW, .BW, .BL]), startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
