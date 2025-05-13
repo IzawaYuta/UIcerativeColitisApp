@@ -14,7 +14,7 @@ struct ToDayView: View {
     @State private var showDatePicker = false
 //    @State private var count: Int = 0
     @State private var showStoolsRecordView = false
-    @State private var newMemoTextField: String = ""
+    @State private var newMemoTextEditor: String = ""
     @Binding var selectedDate: Date
     //    @ObservedResults(DateData.self) var dateDataList
 //    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
@@ -116,15 +116,23 @@ struct ToDayView: View {
             .frame(height: 85)
             .padding(.horizontal)
             
-            ZStack {
-                TextField("メモ", text: $newMemoTextField)
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: $newMemoTextEditor)
                     .padding()
+                    .frame(height: 100)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
                     .font(.system(size: 16, weight: .regular, design: .default))
                     .padding(.horizontal, 20)
                     .onSubmit {
                         saveMemo()
                     }
+                
+                if newMemoTextEditor.isEmpty {
+                    Text("メモ")
+                        .foregroundColor(Color(.placeholderText))
+                        .padding(.vertical, 22)
+                        .padding(.horizontal, 40)
+                }
             }
             Spacer()
         }
@@ -204,13 +212,13 @@ struct ToDayView: View {
         if let existingRecord = thaw?.filter({ isSameDay($0.date, date) }).first {
             // 既存データを更新
             try! realm.write {
-                existingRecord.memo = newMemoTextField
+                existingRecord.memo = newMemoTextEditor
             }
         } else {
             // 新規データを追加
             let newRecord = MemoModel()
             newRecord.date = date
-            newRecord.memo = newMemoTextField
+            newRecord.memo = newMemoTextEditor
             
             try! realm.write {
                 realm.add(newRecord)
@@ -222,10 +230,10 @@ struct ToDayView: View {
         // selectedDate と同じ日付のメモを検索
         if let existingRecord = memoModel.filter({ isSameDay($0.date, date) }).first {
             // 既存のメモがあればTextFieldに表示
-            newMemoTextField = existingRecord.memo
+            newMemoTextEditor = existingRecord.memo
         } else {
             // なければTextFieldを空にする
-            newMemoTextField = ""
+            newMemoTextEditor = ""
         }
     }
     
