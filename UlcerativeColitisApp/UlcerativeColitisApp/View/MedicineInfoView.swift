@@ -12,8 +12,13 @@ struct MedicineInfoView: View {
     
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
     
-    @State private var medicineNameTextField = ""
-    @State private var newMemoTextEditor = ""
+    @State private var medicineNameTextField = "" // 薬の名前
+    @State private var stockTextField = "" // 在庫
+    @State private var dosageTextField = "" // 服用量
+    @State private var newMemoTextEditor = "" // メモ
+    @State private var dosingTimePicker: Date = Date() // 服用時間
+    @State private var addDosingTimePicker = false // 服用時間追加ボタン
+    @State private var unit = 1 // 単位
     
     @State var image: UIImage?
     @State private var showImagePickerDialog = false
@@ -98,6 +103,39 @@ struct MedicineInfoView: View {
                         )
                 }
             }
+            
+            HStack {
+                Text("服用量")
+                TextField("", text: $dosageTextField)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(width: 100)
+                Picker("単位", selection: $unit) {
+                    Text("Picker")
+                }
+            }
+            
+            HStack {
+                Text("服用時間")
+                Button(action: {
+                    addDosingTimePicker.toggle()
+                }) {
+                    Image(systemName: "plus")
+                }
+                if addDosingTimePicker {
+                    DatePicker("服用時間", selection: $dosingTimePicker, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                }
+            }
+            
+            HStack {
+                Text("在庫")
+                TextField("", text: $stockTextField)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(width: 100)
+                Text("錠")
+            }
+            .padding()
+            
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $newMemoTextEditor)
                     .frame(maxWidth: .infinity)
