@@ -18,7 +18,12 @@ struct MedicineInfoView: View {
     @State private var newMemoTextEditor = "" // メモ
     @State private var dosingTimePicker: Date = Date() // 服用時間
     @State private var addDosingTimePicker = false // 服用時間追加ボタン
-    @State private var unit = 1 // 単位
+    @State private var unit: String = "錠" // 初期値を設定
+    @State private var units = ["錠", "mg", "ml", "カプセル", "包", "滴", "g", "単位"] // Pickerの選択肢
+    @State private var selectedUnit = "錠" // Pickerで選択された値
+    @State private var newUnit = "" // 新しい単位を入力するテキストフィールドの値
+    @State private var isEditing = false // 編集モードのトグル
+    @State private var isPicker = false // 編集モードのトグル
     
     @State var image: UIImage?
     @State private var showImagePickerDialog = false
@@ -26,8 +31,8 @@ struct MedicineInfoView: View {
     @State private var showLibrary: Bool = false
     
     var body: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 50) {
+        VStack(spacing: 40) {
+            VStack(spacing: 10) {
                 VStack(alignment: .center, spacing: 10) {
                     if let image = image {
                         Image(uiImage: image)
@@ -92,6 +97,7 @@ struct MedicineInfoView: View {
                 VStack {
                     TextField("お薬の名前", text: $medicineNameTextField)
                         .frame(width: 150, height: 50)
+                        .multilineTextAlignment(.center)
                         .padding(.bottom, 5)
                         .overlay(
                             Rectangle()
@@ -108,10 +114,96 @@ struct MedicineInfoView: View {
                 Text("服用量")
                 TextField("", text: $dosageTextField)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .multilineTextAlignment(.trailing)
                     .frame(width: 100)
-                Picker("単位", selection: $unit) {
-                    Text("Picker")
+                Button(action: {
+                    isPicker.toggle()
+                }) {
+                    Image(systemName: "plus")
                 }
+                .sheet(isPresented: $isPicker) {
+                    VStack {
+                        Text("単位を選択してください")
+                            .font(.headline)
+                            .padding()
+                        
+                        Picker("単位を選択", selection: $selectedUnit) {
+                            ForEach(units, id: \.self) { unit in
+                                Text(unit).tag(unit)
+                            }
+                        }
+                        .labelsHidden() // ラベルを非表示
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(height: 200)
+                        
+                        Button(action: {
+                            isPicker = false // Pickerを閉じる
+                        }) {
+                            Text("完了")
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.green)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                                .padding(.top)
+                        }
+                    }
+                }
+//                VStack(spacing: 20) {
+//                    // Picker
+//                    Picker("単位を選択", selection: $selectedUnit) {
+//                        ForEach(units, id: \.self) { unit in
+//                            Text(unit).tag(unit)
+//                        }
+//                    }
+//                    .pickerStyle(WheelPickerStyle())
+//                    .frame(height: 150)
+//                    
+//                    // 編集ボタン
+//                    Button(action: {
+//                        isEditing.toggle()
+//                    }) {
+//                        Text(isEditing ? "完了" : "編集")
+//                            .padding()
+//                            .frame(maxWidth: .infinity)
+//                            .background(isEditing ? Color.green : Color.blue)
+//                            .foregroundColor(.white)
+//                            .cornerRadius(8)
+//                    }
+//                    
+//                    // 編集モードのUI
+//                    if isEditing {
+//                        VStack(spacing: 10) {
+//                            // 新しい単位を追加する部分
+//                            HStack {
+//                                TextField("新しい単位を追加", text: $newUnit)
+//                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+//                                    .padding(.horizontal)
+//                                
+//                                Button(action: {
+//                                    addUnit()
+//                                }) {
+//                                    Text("追加")
+//                                        .padding(.horizontal)
+//                                        .padding(.vertical, 8)
+//                                        .background(Color.blue)
+//                                        .foregroundColor(.white)
+//                                        .cornerRadius(8)
+//                                }
+//                                .disabled(newUnit.isEmpty) // 空の場合はボタンを無効化
+//                            }
+//                            
+//                            // 単位リスト（削除可能）
+//                            List {
+//                                ForEach(units, id: \.self) { unit in
+//                                    Text(unit)
+//                                }
+//                                .onDelete(perform: deleteUnit) // スワイプで削除可能
+//                            }
+//                            .frame(height: 200) // リストの高さを調整
+//                        }
+//                    }
+//                }
             }
             
             HStack {
@@ -131,6 +223,7 @@ struct MedicineInfoView: View {
                 Text("在庫")
                 TextField("", text: $stockTextField)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .multilineTextAlignment(.trailing)
                     .frame(width: 100)
                 Text("錠")
             }
@@ -177,6 +270,18 @@ struct MedicineInfoView: View {
             Spacer()
         }
         .padding()
+    }
+    
+    private func addUnit() {
+        if !newUnit.isEmpty && !units.contains(newUnit) {
+            units.append(newUnit)
+            newUnit = "" // 入力フィールドをリセット
+        }
+    }
+    
+    // 単位を削除
+    private func deleteUnit(at offsets: IndexSet) {
+        units.remove(atOffsets: offsets)
     }
 }
 
