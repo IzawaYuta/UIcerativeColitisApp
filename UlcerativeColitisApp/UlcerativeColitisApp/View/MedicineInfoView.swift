@@ -13,6 +13,7 @@ struct MedicineInfoView: View {
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
     
     @State private var medicineNameTextField = ""
+    @State private var newMemoTextEditor = ""
     
     @State var image: UIImage?
     @State private var showImagePickerDialog = false
@@ -84,34 +85,44 @@ struct MedicineInfoView: View {
                     }
                 }
                 VStack {
-//                    Text("お薬の名前")
-//                        .font(.callout)
                     TextField("お薬の名前", text: $medicineNameTextField)
                         .frame(width: 150, height: 50)
-                        .padding(.bottom, 5) // テキストと線の間にスペースを追加
+                        .padding(.bottom, 5)
                         .overlay(
                             Rectangle()
-                                .frame(height: 2) // 線の太さ
-                                .foregroundColor(.gray) // 線の色
-                                .padding(.top, -15), // 線をテキストフィールドの下に配置
+                                .frame(height: 2)
+                                .foregroundColor(.gray)
+                                .padding(.top, -15),
+                            
                             alignment: .bottom
                         )
-
                 }
             }
-            VStack {
-                Text("メモ")
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: $newMemoTextEditor)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 100)
+                    .border(.gray)
+                
+                if newMemoTextEditor.isEmpty {
+                    Text("メモ")
+                        .foregroundColor(Color(.placeholderText))
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 5)
+                        .allowsHitTesting(false)
+                }
             }
+            .padding()
             HStack {
                 Button("キャンセル", role: .cancel) {}
                     .foregroundColor(.primary)
                 .background(
                     RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.gray.opacity(0.3))
                         .frame(width: 150, height: 40)
-                        .viewStyleView()
                 )
-                .padding(.horizontal)
                 Spacer()
+                    .frame(width: 130)
                 Button(action: {
                     
                 }) {
@@ -120,8 +131,8 @@ struct MedicineInfoView: View {
                 .foregroundColor(.primary)
                 .background(
                     RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.gray.opacity(0.3))
                         .frame(width: 150, height: 40)
-                        .viewStyleView()
                 )
                 .padding(.horizontal)
             }
