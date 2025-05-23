@@ -11,6 +11,7 @@ import RealmSwift
 struct MedicineInfoView: View {
     
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
+    @Environment(\.dismiss) var dismiss // モーダルを閉じるためのプロパティ
     
     @State private var medicineNameTextField = "" // 薬の名前
     @State private var stockTextField = "" // 在庫
@@ -245,7 +246,13 @@ struct MedicineInfoView: View {
             }
             .padding()
             HStack {
-                Button("キャンセル", role: .cancel) {}
+                Button("キャンセル", role: .cancel) {
+                    dismiss()
+                    stockTextField = ""
+                    dosageTextField = ""
+                    newMemoTextEditor = ""
+                    medicineNameTextField = ""
+                }
                     .foregroundColor(.primary)
                 .background(
                     RoundedRectangle(cornerRadius: 15)
@@ -256,6 +263,7 @@ struct MedicineInfoView: View {
                     .frame(width: 130)
                 Button(action: {
                     medicineNameSave()
+                    dismiss()
                 }) {
                     Text("保存")
                 }
