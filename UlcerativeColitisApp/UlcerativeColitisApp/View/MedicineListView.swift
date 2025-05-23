@@ -17,7 +17,8 @@ struct MedicineListView: View {
             ForEach(medicineDataModel, id: \.self) { list in
                 HStack {
                     Text(list.medicineName)
-                    Text("\(list.dosage ?? 0)") // 数値を文字列に変換
+                    Text("\(list.dosage ?? 0)")
+                    Text("\(list.stock ?? 1)")
                     Text(list.memo ?? "")
                 }
             }

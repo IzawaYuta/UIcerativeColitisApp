@@ -15,6 +15,7 @@ struct MedicineInfoView: View {
     
     @State private var medicineNameTextField = "" // 薬の名前
     @State private var stockTextField = "" // 在庫
+    @State private var stock: Int? = nil// Int型で保持するプロパティ
     @State private var dosageTextField = "" // 服用量
     @State private var dosage: Int? = nil// Int型で保持するプロパティ
     @State private var newMemoTextEditor = "" // メモ
@@ -231,6 +232,9 @@ struct MedicineInfoView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .multilineTextAlignment(.center)
                     .frame(width: 100)
+                    .onChange(of: dosageTextField) { newValue in
+                        stock = Int(newValue) // 文字列を数値に変換
+                    }
                 Text("錠")
             }
             .padding()
@@ -291,6 +295,7 @@ struct MedicineInfoView: View {
             let medicineDataModel = MedicineDataModel()
             medicineDataModel.medicineName = medicineNameTextField
             medicineDataModel.dosage = dosage
+            medicineDataModel.stock = stock
             medicineDataModel.memo = newMemoTextEditor
             realm.add(medicineDataModel)
         }
