@@ -13,6 +13,7 @@ struct ToDayView: View {
     @State private var date = Date()
     @State private var showDatePicker = false
     @State private var showMedicineInfo = false
+    @State private var showMedicineList = false
 //    @State private var count: Int = 0
     @State private var showStoolsRecordView = false
     @State private var newMemoTextEditor: String = ""
@@ -121,14 +122,24 @@ struct ToDayView: View {
                 RoundedRectangle(cornerRadius: 15)
                     .fill(Color.blue.opacity(0.1))
                 
-                Button(action: {
-                    showMedicineInfo.toggle()
-                }) {
-                    Image(systemName: "plus")
+                HStack {
+                    Button(action: {
+                        showMedicineInfo.toggle()
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                    .sheet(isPresented: $showMedicineInfo) {
+                        MedicineInfoView()
+                    }
+                    Button(action: {
+                        showMedicineList.toggle()
+                    }) {
+                        Image(systemName: "arrow.up")
+                    }
+                    .sheet(isPresented: $showMedicineList) {
+                        MedicineListView()
+                    }
                 }
-                        .sheet(isPresented: $showMedicineInfo) {
-                            MedicineInfoView()
-                        }
             }
             .frame(height: 85)
             .padding(.horizontal)

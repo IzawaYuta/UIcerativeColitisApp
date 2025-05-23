@@ -255,7 +255,7 @@ struct MedicineInfoView: View {
                 Spacer()
                     .frame(width: 130)
                 Button(action: {
-                    
+                    medicineNameSave()
                 }) {
                     Text("保存")
                 }
@@ -270,6 +270,15 @@ struct MedicineInfoView: View {
             Spacer()
         }
         .padding()
+    }
+    
+    func medicineNameSave() {
+        let realm = try! Realm()
+        try! realm.write {
+            let medicineDataModel = MedicineDataModel()
+            medicineDataModel.medicineName = medicineNameTextField
+            realm.add(medicineDataModel)
+        }
     }
     
     private func addUnit() {
