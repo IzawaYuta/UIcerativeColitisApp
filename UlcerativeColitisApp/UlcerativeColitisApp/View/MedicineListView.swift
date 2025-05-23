@@ -13,13 +13,21 @@ struct MedicineListView: View {
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
     
     var body: some View {
-        List {
-            ForEach(medicineDataModel, id: \.self) { list in
-                HStack {
-                    Text(list.medicineName)
-                    Text("\(list.dosage ?? 0)")
-                    Text("\(list.stock ?? 0)")
-                    Text(list.memo ?? "")
+        NavigationStack {
+            VStack {
+                ForEach(medicineDataModel, id: \.self) { list in
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.gray.gradient.secondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 70)
+                        HStack {
+                            Text(list.medicineName)
+                            Text("\(list.dosage ?? 0)")
+                            Text("\(list.stock ?? 0)")
+                        }
+                    }
+                    .padding(.horizontal)
                 }
             }
         }
