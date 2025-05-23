@@ -16,6 +16,7 @@ struct MedicineInfoView: View {
     @State private var medicineNameTextField = "" // 薬の名前
     @State private var stockTextField = "" // 在庫
     @State private var dosageTextField = "" // 服用量
+    @State private var dosage: Int? = nil// Int型で保持するプロパティ
     @State private var newMemoTextEditor = "" // メモ
     @State private var dosingTimePicker: Date = Date() // 服用時間
     @State private var addDosingTimePicker = false // 服用時間追加ボタン
@@ -118,6 +119,9 @@ struct MedicineInfoView: View {
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
                     .frame(width: 100)
+                    .onChange(of: dosageTextField) { newValue in
+                        dosage = Int(newValue) // 文字列を数値に変換
+                    }
                 Button(action: {
                     isPicker.toggle()
                 }) {
@@ -286,6 +290,7 @@ struct MedicineInfoView: View {
         try! realm.write {
             let medicineDataModel = MedicineDataModel()
             medicineDataModel.medicineName = medicineNameTextField
+            medicineDataModel.dosage = dosage
             medicineDataModel.memo = newMemoTextEditor
             realm.add(medicineDataModel)
         }
