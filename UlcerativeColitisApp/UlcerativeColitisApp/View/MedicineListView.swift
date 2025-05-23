@@ -18,7 +18,7 @@ struct MedicineListView: View {
                 HStack {
                     Text(list.medicineName)
                     Text("\(list.dosage ?? 0)")
-                    Text("\(list.stock ?? 1)")
+                    Text("\(list.stock ?? 0)")
                     Text(list.memo ?? "")
                 }
             }

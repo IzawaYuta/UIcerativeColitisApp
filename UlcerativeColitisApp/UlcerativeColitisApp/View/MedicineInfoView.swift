@@ -255,35 +255,36 @@ struct MedicineInfoView: View {
             }
             .padding()
             HStack {
-                Button("キャンセル", role: .cancel) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 150, height: 40)
+                    Text("キャンセル")
+                }
+                .onTapGesture {
                     dismiss()
                     stockTextField = ""
                     dosageTextField = ""
                     newMemoTextEditor = ""
                     medicineNameTextField = ""
                 }
-                .foregroundColor(.primary)
-                .background(
-                    RoundedRectangle(cornerRadius: 15)
+                Spacer()
+                    .frame(width: 45)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
                         .fill(Color.gray.opacity(0.3))
                         .frame(width: 150, height: 40)
-                )
-                Spacer()
-                    .frame(width: 130)
-                Button(action: {
-                    saveMedicineInfo()
-                    dismiss()
-                }) {
                     Text("保存")
                 }
-                .foregroundColor(.primary)
-                .background(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 150, height: 40)
-                )
-                .padding(.horizontal)
+                .onTapGesture {
+                    if medicineNameTextField.isEmpty {
+                    } else {
+                        saveMedicineInfo()
+                    }
+                    dismiss()
+                }
             }
+            .padding(.horizontal)
             Spacer()
         }
         .padding()
