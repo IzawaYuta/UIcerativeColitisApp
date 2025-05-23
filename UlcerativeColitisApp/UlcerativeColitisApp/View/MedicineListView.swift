@@ -14,8 +14,11 @@ struct MedicineListView: View {
     
     var body: some View {
         List {
-            ForEach(medicineDataModel) { list in
-                Text(list.medicineName)
+            ForEach(medicineDataModel, id: \.self) { list in
+                HStack {
+                    Text(list.medicineName)
+                    Text(list.memo ?? "")
+                }
             }
         }
     }

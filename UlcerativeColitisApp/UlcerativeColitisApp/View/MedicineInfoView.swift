@@ -115,7 +115,8 @@ struct MedicineInfoView: View {
                 Text("服用量")
                 TextField("", text: $dosageTextField)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.center)
                     .frame(width: 100)
                 Button(action: {
                     isPicker.toggle()
@@ -150,61 +151,61 @@ struct MedicineInfoView: View {
                         }
                     }
                 }
-//                VStack(spacing: 20) {
-//                    // Picker
-//                    Picker("単位を選択", selection: $selectedUnit) {
-//                        ForEach(units, id: \.self) { unit in
-//                            Text(unit).tag(unit)
-//                        }
-//                    }
-//                    .pickerStyle(WheelPickerStyle())
-//                    .frame(height: 150)
-//                    
-//                    // 編集ボタン
-//                    Button(action: {
-//                        isEditing.toggle()
-//                    }) {
-//                        Text(isEditing ? "完了" : "編集")
-//                            .padding()
-//                            .frame(maxWidth: .infinity)
-//                            .background(isEditing ? Color.green : Color.blue)
-//                            .foregroundColor(.white)
-//                            .cornerRadius(8)
-//                    }
-//                    
-//                    // 編集モードのUI
-//                    if isEditing {
-//                        VStack(spacing: 10) {
-//                            // 新しい単位を追加する部分
-//                            HStack {
-//                                TextField("新しい単位を追加", text: $newUnit)
-//                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-//                                    .padding(.horizontal)
-//                                
-//                                Button(action: {
-//                                    addUnit()
-//                                }) {
-//                                    Text("追加")
-//                                        .padding(.horizontal)
-//                                        .padding(.vertical, 8)
-//                                        .background(Color.blue)
-//                                        .foregroundColor(.white)
-//                                        .cornerRadius(8)
-//                                }
-//                                .disabled(newUnit.isEmpty) // 空の場合はボタンを無効化
-//                            }
-//                            
-//                            // 単位リスト（削除可能）
-//                            List {
-//                                ForEach(units, id: \.self) { unit in
-//                                    Text(unit)
-//                                }
-//                                .onDelete(perform: deleteUnit) // スワイプで削除可能
-//                            }
-//                            .frame(height: 200) // リストの高さを調整
-//                        }
-//                    }
-//                }
+                //                VStack(spacing: 20) {
+                //                    // Picker
+                //                    Picker("単位を選択", selection: $selectedUnit) {
+                //                        ForEach(units, id: \.self) { unit in
+                //                            Text(unit).tag(unit)
+                //                        }
+                //                    }
+                //                    .pickerStyle(WheelPickerStyle())
+                //                    .frame(height: 150)
+                //
+                //                    // 編集ボタン
+                //                    Button(action: {
+                //                        isEditing.toggle()
+                //                    }) {
+                //                        Text(isEditing ? "完了" : "編集")
+                //                            .padding()
+                //                            .frame(maxWidth: .infinity)
+                //                            .background(isEditing ? Color.green : Color.blue)
+                //                            .foregroundColor(.white)
+                //                            .cornerRadius(8)
+                //                    }
+                //
+                //                    // 編集モードのUI
+                //                    if isEditing {
+                //                        VStack(spacing: 10) {
+                //                            // 新しい単位を追加する部分
+                //                            HStack {
+                //                                TextField("新しい単位を追加", text: $newUnit)
+                //                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                //                                    .padding(.horizontal)
+                //
+                //                                Button(action: {
+                //                                    addUnit()
+                //                                }) {
+                //                                    Text("追加")
+                //                                        .padding(.horizontal)
+                //                                        .padding(.vertical, 8)
+                //                                        .background(Color.blue)
+                //                                        .foregroundColor(.white)
+                //                                        .cornerRadius(8)
+                //                                }
+                //                                .disabled(newUnit.isEmpty) // 空の場合はボタンを無効化
+                //                            }
+                //
+                //                            // 単位リスト（削除可能）
+                //                            List {
+                //                                ForEach(units, id: \.self) { unit in
+                //                                    Text(unit)
+                //                                }
+                //                                .onDelete(perform: deleteUnit) // スワイプで削除可能
+                //                            }
+                //                            .frame(height: 200) // リストの高さを調整
+                //                        }
+                //                    }
+                //                }
             }
             
             HStack {
@@ -224,7 +225,7 @@ struct MedicineInfoView: View {
                 Text("在庫")
                 TextField("", text: $stockTextField)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .multilineTextAlignment(.trailing)
+                    .multilineTextAlignment(.center)
                     .frame(width: 100)
                 Text("錠")
             }
@@ -253,7 +254,7 @@ struct MedicineInfoView: View {
                     newMemoTextEditor = ""
                     medicineNameTextField = ""
                 }
-                    .foregroundColor(.primary)
+                .foregroundColor(.primary)
                 .background(
                     RoundedRectangle(cornerRadius: 15)
                         .fill(Color.gray.opacity(0.3))
@@ -262,7 +263,7 @@ struct MedicineInfoView: View {
                 Spacer()
                     .frame(width: 130)
                 Button(action: {
-                    medicineNameSave()
+                    saveMedicineInfo()
                     dismiss()
                 }) {
                     Text("保存")
@@ -280,11 +281,12 @@ struct MedicineInfoView: View {
         .padding()
     }
     
-    func medicineNameSave() {
+    func saveMedicineInfo() {
         let realm = try! Realm()
         try! realm.write {
             let medicineDataModel = MedicineDataModel()
             medicineDataModel.medicineName = medicineNameTextField
+            medicineDataModel.memo = newMemoTextEditor
             realm.add(medicineDataModel)
         }
     }
