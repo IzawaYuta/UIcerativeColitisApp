@@ -20,7 +20,7 @@ struct MainTabView: View {
                 StoolsRecordView(selectedDate: Date())
             }
             Tab("3", systemImage: "plus") {
-                ChartsView()
+                UCCountView()
             }
         }
     }

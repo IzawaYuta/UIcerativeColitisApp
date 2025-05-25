@@ -54,3 +54,9 @@ class MemoModel: Object, Identifiable {
     @Persisted var date: Date // 日付
     @Persisted var memo: String = "" // メモ
 }
+
+//MARK: 潰瘍性大腸炎になって何日カウント
+class UCCountModel: Object, Identifiable {
+    @Persisted var id = UUID()
+    @Persisted var date: Date? = Date()
+}
