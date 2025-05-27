@@ -8,6 +8,7 @@
 import SwiftUI
 import RealmSwift
 
+//MARK: お薬情報画面
 struct MedicineInfoView: View {
     
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
@@ -32,11 +33,13 @@ struct MedicineInfoView: View {
     @State private var showImagePickerDialog = false
     @State private var showCamera: Bool = false
     @State private var showLibrary: Bool = false
+    @State private var showUnitPicker: Bool = false
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 40) {
                 VStack(spacing: 10) {
+                    //MARK: お薬の画像
                     VStack(alignment: .center, spacing: 10) {
                         if let image = image {
                             Image(uiImage: image)
@@ -87,6 +90,8 @@ struct MedicineInfoView: View {
                             showImagePickerDialog = false
                         }
                     }
+                    
+                    //MARK: お薬の名前
                     VStack {
                         TextField("お薬の名前", text: $medicineNameTextField)
                             .frame(width: 150, height: 50)
@@ -103,6 +108,7 @@ struct MedicineInfoView: View {
                     }
                 }
                 
+                //MARK: 服用量
                 HStack {
                     Text("服用量")
                     TextField("", text: $dosageTextField)
@@ -113,39 +119,47 @@ struct MedicineInfoView: View {
                         .onChange(of: dosageTextField) { newValue in
                             dosage = Int(newValue) // 文字列を数値に変換
                         }
-                    Button(action: {
-                        isPicker.toggle()
-                    }) {
-                        Image(systemName: "plus")
-                    }
-                    .sheet(isPresented: $isPicker) {
-                        VStack {
-                            Text("単位を選択してください")
-                                .font(.headline)
-                                .padding()
-                            
-                            Picker("単位を選択", selection: $selectedUnit) {
-                                ForEach(units, id: \.self) { unit in
-                                    Text(unit).tag(unit)
-                                }
-                            }
-                            .labelsHidden() // ラベルを非表示
-                            .pickerStyle(WheelPickerStyle())
-                            .frame(height: 200)
-                            
-                            Button(action: {
-                                isPicker = false // Pickerを閉じる
-                            }) {
-                                Text("完了")
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color.green)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
-                                    .padding(.top)
-                            }
+                    Picker("単位を選択", selection: $selectedUnit) {
+//                        ForEach(Array(Set(medicineDataModel.map { $0.unit })), id: \.self) { unit in
+//                            Text(unit)// 選択肢として表示
+//                        }
+                        ForEach(Array(Set(medicineDataModel.flatMap { $0.unit })), id: \.self) { unit in
+                            Text(unit)
                         }
                     }
+                    //                    Button(action: {
+                    //                        isPicker.toggle()
+                    //                    }) {
+                    //                        Image(systemName: "plus")
+                    //                    }
+                    //                    .sheet(isPresented: $isPicker) {
+                    //                        VStack {
+                    //                            Text("単位を選択してください")
+                    //                                .font(.headline)
+                    //                                .padding()
+                    //
+                    //                            Picker("単位を選択", selection: $selectedUnit) {
+                    //                                ForEach(units, id: \.self) { unit in
+                    //                                    Text(unit).tag(unit)
+                    //                                }
+                    //                            }
+                    //                            .labelsHidden() // ラベルを非表示
+                    //                            .pickerStyle(WheelPickerStyle())
+                    //                            .frame(height: 200)
+                    //
+                    //                            Button(action: {
+                    //                                isPicker = false // Pickerを閉じる
+                    //                            }) {
+                    //                                Text("完了")
+                    //                                    .padding()
+                    //                                    .frame(maxWidth: .infinity)
+                    //                                    .background(Color.green)
+                    //                                    .foregroundColor(.white)
+                    //                                    .cornerRadius(8)
+                    //                                    .padding(.top)
+                    //                            }
+                    //                        }
+                    //                    }
                     //                VStack(spacing: 20) {
                     //                    // Picker
                     //                    Picker("単位を選択", selection: $selectedUnit) {
@@ -203,6 +217,7 @@ struct MedicineInfoView: View {
                     //                }
                 }
                 
+                //MARK: 服用時間
                 HStack {
                     Text("服用時間")
                     Button(action: {
@@ -216,6 +231,7 @@ struct MedicineInfoView: View {
                     }
                 }
                 
+                //MARK: 在庫
                 HStack {
                     Text("在庫")
                     TextField("", text: $stockTextField)
@@ -225,10 +241,11 @@ struct MedicineInfoView: View {
                         .onChange(of: dosageTextField) { newValue in
                             stock = Int(newValue) // 文字列を数値に変換
                         }
-                    Text("錠")
+                    Text(selectedUnit)
                 }
                 .padding()
                 
+                //MARK: メモ
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $newMemoTextEditor)
                         .frame(maxWidth: .infinity)
@@ -244,6 +261,8 @@ struct MedicineInfoView: View {
                     }
                 }
                 .padding()
+                
+                //MARK: キャンセル・保存ボタン
                 HStack {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10)
@@ -278,26 +297,62 @@ struct MedicineInfoView: View {
                 Spacer()
             }
             .padding()
+            
+            //MARK: ツールバー
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        if image != nil {
-                            self.image = nil
+                    Menu("編集") {
+                        Button(action: {
+                            if image != nil {
+                                self.image = nil
+                            }
+                            
+                            if image == nil {
+                                showImagePickerDialog = true
+                            }
+                        }) {
+                            Text("画像を変更")
                         }
                         
-                        if image == nil {
-                            showImagePickerDialog = true
+                        Button(action: {
+                            showUnitPicker = true
+                        }) {
+                            Text("お薬の単位を変更")
                         }
-                    }) {
-                        Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                            .foregroundColor(.primary)
-                            .font(.system(size: 13))
                     }
+                }
+            }
+            .sheet(isPresented: $showUnitPicker) {
+                ShowUnitPicker(selectedUnit: $selectedUnit, units: units)
+            }
+            
+            .sheet(isPresented: $showUnitPicker) {
+                VStack {
+                    HStack {
+                        Button("キャンセル", role: .cancel) {
+                            showUnitPicker = false
+                        }
+                        Spacer()
+                        Button(action: {
+                            
+                        }) {
+                            Text("編集")
+                        }
+                    }
+                    .padding()
+                    Picker("単位を選択", selection: $selectedUnit) {
+                        ForEach(units, id: \.self) { list in
+                            Text(list)
+                        }
+                    }
+                    .pickerStyle(WheelPickerStyle())
+                    .presentationDetents([.height(200)])
                 }
             }
         }
     }
     
+    //MARK: メソッド
     func saveMedicineInfo() {
         let realm = try! Realm()
         try! realm.write {
@@ -323,6 +378,84 @@ struct MedicineInfoView: View {
     }
 }
 
+struct ShowUnitPicker: View {
+    
+    @ObservedResults(MedicineDataModel.self) var medicineDataModel
+    @Binding var selectedUnit: String
+    @State var units: [String]
+    @State private var showAddAlert = false
+    @State private var newUnit: String = ""
+    
+    var body: some View {
+        List {
+            Section {
+                ForEach(uniqueUnits, id: \.self) { list in
+                    Text(list)
+                }
+                .onDelete(perform: deleteUnit)
+            } header: {
+                HStack {
+                    EditButton()
+                    Spacer()
+                    Button(action: {
+                        showAddAlert.toggle()
+                    }) {
+                        Text("追加")
+                    }
+                    .alert("お薬の単位", isPresented: $showAddAlert) {
+                        TextField("錠", text: $newUnit)
+                        Button("キャンセル", role: .cancel) {}
+                        Button(action: {
+                            addUnit()
+                        }) {
+                            Text("追加")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private var uniqueUnits: [String] {
+        Array(Set(medicineDataModel.flatMap { $0.unit })).sorted()
+    }
+    
+    private func deleteUnit(at offsets: IndexSet) {
+        for index in offsets {
+            let unitToDelete = uniqueUnits[index]
+            let realm = try! Realm()
+            
+            // 解凍したオブジェクトを使用する
+            let thawedModels = medicineDataModel.thaw()
+            
+            try! realm.write {
+                // 凍結解除されたデータモデルを使用して更新
+                thawedModels?
+                    .filter { $0.unit.contains(unitToDelete) }
+                    .forEach { model in
+                        realm.delete(model)
+                }
+            }
+        }
+    }
+
+    
+    private func addUnit() {
+        if !newUnit.isEmpty {
+            let realm = try! Realm()
+            try! realm.write {
+                let newMedicine = MedicineDataModel()
+                newMedicine.unit.append(newUnit)
+                realm.add(newMedicine)
+            }
+            newUnit = ""
+        }
+    }
+}
+
 #Preview {
     MedicineInfoView()
+}
+#Preview {
+    ShowUnitPicker(selectedUnit: .constant(""), units: ["あ", "い"])
 }

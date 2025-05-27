@@ -23,7 +23,7 @@ class MedicineDataModel: Object, Identifiable {
     @Persisted var stock: Int? // 在庫
     @Persisted var dosingTime: Date? // 服用時間
     @Persisted var dosage: Int? // 服用量
-    @Persisted var unit: String // 単位
+    @Persisted var unit: List<String> // 単位
     @Persisted var memo: String? // メモ
 }
 
