@@ -22,18 +22,31 @@ struct MedicineInfoView: View {
     @State private var newMemoTextEditor = "" // メモ
     @State private var dosingTimePicker: Date = Date() // 服用時間
     @State private var addDosingTimePicker = false // 服用時間追加ボタン
-    @State private var unit: String = "錠" // 初期値を設定
-    @State private var units = ["錠", "mg", "ml", "カプセル", "包", "滴", "g", "単位"] // Pickerの選択肢
-    @State private var selectedUnit = "錠" // Pickerで選択された値
-    @State private var newUnit = "" // 新しい単位を入力するテキストフィールドの値
-    @State private var isEditing = false // 編集モードのトグル
-    @State private var isPicker = false // 編集モードのトグル
+//    @State private var unit: String = "錠" // 初期値を設定
+    @State private var predefinedUnits = ["錠", "個", "包", "mg", "ml"]
+    @State private var selectedUnit: String = "錠" // Pickerで選択された値 - INITIALIZE TO "錠"
+//    @State private var newUnit = "" // 新しい単位を入力するテキストフィールドの値
+//    @State private var isEditing = false // 編集モードのトグル
+//    @State private var isPicker = false // 編集モードのトグル
     
     @State var image: UIImage?
     @State private var showImagePickerDialog = false
     @State private var showCamera: Bool = false
     @State private var showLibrary: Bool = false
     @State private var showUnitPicker: Bool = false
+    
+    private var allAvailableUnits: [String] {
+        var orderedUnits = predefinedUnits
+        let unitsFromDb = medicineDataModel.flatMap { $0.unit }
+        let uniqueUnitsFromDb = Array(Set(unitsFromDb)) // Setで重複を排除し、Arrayに戻す
+        
+        let additionalUnits = uniqueUnitsFromDb
+            .filter { !orderedUnits.contains($0) } // predefinedUnits に既に含まれているものは除外
+        
+        orderedUnits.append(contentsOf: additionalUnits)
+        
+        return orderedUnits
+    }
     
     var body: some View {
         NavigationStack {
@@ -120,101 +133,10 @@ struct MedicineInfoView: View {
                             dosage = Int(newValue) // 文字列を数値に変換
                         }
                     Picker("単位を選択", selection: $selectedUnit) {
-//                        ForEach(Array(Set(medicineDataModel.map { $0.unit })), id: \.self) { unit in
-//                            Text(unit)// 選択肢として表示
-//                        }
-                        ForEach(Array(Set(medicineDataModel.flatMap { $0.unit })), id: \.self) { unit in
-                            Text(unit)
+                        ForEach(allAvailableUnits, id: \.self) { unitText in
+                            Text(unitText).tag(unitText)
                         }
                     }
-                    //                    Button(action: {
-                    //                        isPicker.toggle()
-                    //                    }) {
-                    //                        Image(systemName: "plus")
-                    //                    }
-                    //                    .sheet(isPresented: $isPicker) {
-                    //                        VStack {
-                    //                            Text("単位を選択してください")
-                    //                                .font(.headline)
-                    //                                .padding()
-                    //
-                    //                            Picker("単位を選択", selection: $selectedUnit) {
-                    //                                ForEach(units, id: \.self) { unit in
-                    //                                    Text(unit).tag(unit)
-                    //                                }
-                    //                            }
-                    //                            .labelsHidden() // ラベルを非表示
-                    //                            .pickerStyle(WheelPickerStyle())
-                    //                            .frame(height: 200)
-                    //
-                    //                            Button(action: {
-                    //                                isPicker = false // Pickerを閉じる
-                    //                            }) {
-                    //                                Text("完了")
-                    //                                    .padding()
-                    //                                    .frame(maxWidth: .infinity)
-                    //                                    .background(Color.green)
-                    //                                    .foregroundColor(.white)
-                    //                                    .cornerRadius(8)
-                    //                                    .padding(.top)
-                    //                            }
-                    //                        }
-                    //                    }
-                    //                VStack(spacing: 20) {
-                    //                    // Picker
-                    //                    Picker("単位を選択", selection: $selectedUnit) {
-                    //                        ForEach(units, id: \.self) { unit in
-                    //                            Text(unit).tag(unit)
-                    //                        }
-                    //                    }
-                    //                    .pickerStyle(WheelPickerStyle())
-                    //                    .frame(height: 150)
-                    //
-                    //                    // 編集ボタン
-                    //                    Button(action: {
-                    //                        isEditing.toggle()
-                    //                    }) {
-                    //                        Text(isEditing ? "完了" : "編集")
-                    //                            .padding()
-                    //                            .frame(maxWidth: .infinity)
-                    //                            .background(isEditing ? Color.green : Color.blue)
-                    //                            .foregroundColor(.white)
-                    //                            .cornerRadius(8)
-                    //                    }
-                    //
-                    //                    // 編集モードのUI
-                    //                    if isEditing {
-                    //                        VStack(spacing: 10) {
-                    //                            // 新しい単位を追加する部分
-                    //                            HStack {
-                    //                                TextField("新しい単位を追加", text: $newUnit)
-                    //                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    //                                    .padding(.horizontal)
-                    //
-                    //                                Button(action: {
-                    //                                    addUnit()
-                    //                                }) {
-                    //                                    Text("追加")
-                    //                                        .padding(.horizontal)
-                    //                                        .padding(.vertical, 8)
-                    //                                        .background(Color.blue)
-                    //                                        .foregroundColor(.white)
-                    //                                        .cornerRadius(8)
-                    //                                }
-                    //                                .disabled(newUnit.isEmpty) // 空の場合はボタンを無効化
-                    //                            }
-                    //
-                    //                            // 単位リスト（削除可能）
-                    //                            List {
-                    //                                ForEach(units, id: \.self) { unit in
-                    //                                    Text(unit)
-                    //                                }
-                    //                                .onDelete(perform: deleteUnit) // スワイプで削除可能
-                    //                            }
-                    //                            .frame(height: 200) // リストの高さを調整
-                    //                        }
-                    //                    }
-                    //                }
                 }
                 
                 //MARK: 服用時間
@@ -323,7 +245,7 @@ struct MedicineInfoView: View {
                 }
             }
             .sheet(isPresented: $showUnitPicker) {
-                ShowUnitPicker(selectedUnit: $selectedUnit, units: units)
+                ShowUnitPicker(units: $predefinedUnits)
             }
             
             .sheet(isPresented: $showUnitPicker) {
@@ -341,8 +263,8 @@ struct MedicineInfoView: View {
                     }
                     .padding()
                     Picker("単位を選択", selection: $selectedUnit) {
-                        ForEach(units, id: \.self) { list in
-                            Text(list)
+                        ForEach(allAvailableUnits, id: \.self) { unitText in
+                            Text(unitText).tag(unitText)
                         }
                     }
                     .pickerStyle(WheelPickerStyle())
@@ -364,122 +286,116 @@ struct MedicineInfoView: View {
             realm.add(medicineDataModel)
         }
     }
-    
-    private func addUnit() {
-        if !newUnit.isEmpty && !units.contains(newUnit) {
-            units.append(newUnit)
-            newUnit = "" // 入力フィールドをリセット
-        }
-    }
-    
-    // 単位を削除
-    private func deleteUnit(at offsets: IndexSet) {
-        units.remove(atOffsets: offsets)
-    }
 }
 
 //MARK: ShowUnitPicker
 struct ShowUnitPicker: View {
     
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
-    @Environment(\.editMode) private var editMode
+    @Environment(\.dismiss) var dismiss
     @State private var isEditing = false
-    @Binding var selectedUnit: String
-    @State var units: [String]
+    @Binding var units: [String] // MedicineInfoView の predefinedUnits へのバインディング
     @State private var showAddAlert = false
-    @State private var newUnit: String = ""
+    @State private var newUnitTextField: String = ""
+    
+    // 表示用の単位を計算するプロパティ: 事前定義された単位とDB内の単位を組み合わせる
+    private var displayableUnits: [String] {
+        let unitsFromDb = medicineDataModel.flatMap { $0.unit }
+        // バインドされた 'units' (事前定義されたもの) とDBからの単位を組み合わせる
+        return Array(Set(self.units + unitsFromDb)).sorted()
+    }
     
     var body: some View {
-        List {
-            Section {
-                ForEach(uniqueUnits, id: \.self) { list in
-                    Text(list)
+        NavigationView {
+            List {
+                Section(header: Text("編集可能な単位リスト")) {
+                    if units.isEmpty && !isEditing {
+                        Text("単位がありません。「追加」して新しい単位を登録してください。")
+                            .foregroundColor(.secondary)
+                    }
+                    ForEach(units.indices, id: \.self) { index in
+                        Text(units[index])
+                    }
+                    .onDelete(perform: deletePredefinedUnit)
                 }
-                .onDelete(perform: deleteUnit)
-            } header: {
-                HStack {
-                    Button(action: {
-                        toggleEditMode()
-                    }) {
-                        Text(isEditing ? "完了" : "編集")
-                    }
-                    Spacer()
-                    Button(action: {
-                        showAddAlert.toggle()
-                    }) {
-                        Text("追加")
-                    }
-                    .alert("お薬の単位", isPresented: $showAddAlert) {
-                        TextField("錠", text: $newUnit)
-                        Button("キャンセル", role: .cancel) {}
-                        Button(action: {
-                            addUnit()
-                        }) {
-                            Text("追加")
+                if !unitsFromDbOnly.isEmpty {
+                    Section(header: Text("データベースで使用中の単位 (参考)")) {
+                        ForEach(unitsFromDbOnly, id: \.self) { dbUnit in
+                            Text(dbUnit)
                         }
-                        .disabled(newUnit.isEmpty)
                     }
                 }
             }
-        }
-    }
-    
-    private var uniqueUnits: [String] {
-        Array(Set(medicineDataModel.flatMap { $0.unit }))
-    }
-    
-    private func deleteUnit(at offsets: IndexSet) {
-        for index in offsets {
-            let unitToDelete = uniqueUnits[index]
-            let realm = try! Realm()
-            
-            // 解凍したオブジェクトを使用する
-            let thawedModels = medicineDataModel.thaw()
-            
-            try! realm.write {
-                // 凍結解除されたデータモデルを使用して更新
-                thawedModels?
-                    .filter { $0.unit.contains(unitToDelete) }
-                    .forEach { model in
-                        realm.delete(model)
+            .navigationTitle("単位リスト管理")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(isEditing ? "完了" : "編集") {
+                        isEditing.toggle()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("閉じる")
+                    }
+                }
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Spacer()
+                    Button {
+                        newUnitTextField = ""
+                        showAddAlert.toggle()
+                    } label: {
+                        Label("新しい単位を追加", systemImage: "plus.circle.fill")
+                    }
+                    .disabled(isEditing == false && units.isEmpty == false)
                 }
             }
+            .environment(\.editMode, .constant(isEditing ? EditMode.active : EditMode.inactive))
+            .alert("新しい単位を追加", isPresented: $showAddAlert) {
+                TextField("例: ml, スプレー", text: $newUnitTextField)
+                Button("キャンセル", role: .cancel) {}
+                Button("追加") {
+                    addPredefinedUnit()
+                }
+                .disabled(newUnitTextField.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
         }
     }
     
-    private func addUnit() {
-        if !newUnit.isEmpty {
-            let realm = try! Realm()
-            
-            let existingUnits = realm.objects(MedicineDataModel.self).flatMap { $0.unit }
-            if existingUnits.contains(newUnit) {
-                print("すでに存在する単位のため、追加しません: \(newUnit)")
-                return
-            }
-            
-            try! realm.write {
-                let newMedicine = MedicineDataModel()
-                newMedicine.unit.append(newUnit)
-                realm.add(newMedicine)
-                print("新しい単位が追加されました: \(newUnit)")
-            }
-            newUnit = ""
-        }
+    // DBには存在するが、事前定義リストには含まれていない単位
+    private var unitsFromDbOnly: [String] {
+        let dbUnits = Set(medicineDataModel.flatMap { $0.unit })
+        let predefined = Set(self.units)
+        return Array(dbUnits.subtracting(predefined)) // predefined に含まれない dbUnits の要素を返す
     }
     
-    private func toggleEditMode() {
-        if isEditing {
-            editMode?.wrappedValue = .inactive
-        } else {
-            editMode?.wrappedValue = .active
+    // @Binding 'units' (事前定義リスト) から削除する
+    private func deletePredefinedUnit(at offsets: IndexSet) {
+        units.remove(atOffsets: offsets)
+        print("事前定義リストから単位を削除しました。現在のリスト: \(units)")
+    }
+    
+    // @Binding 'units' (事前定義リスト) に追加する
+    private func addPredefinedUnit() {
+        let realm = try! Realm()
+        let unitToAdd = newUnitTextField.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !unitToAdd.isEmpty && !units.contains(unitToAdd) {
+            // 重複した提案を避けるためにDBに既に存在するかどうかも確認するが、ここでは 'units' が管理対象の主要リスト
+            let allCurrentDisplayUnits = Set(displayableUnits)
+            if allCurrentDisplayUnits.contains(unitToAdd) {
+                print("単位 '\(unitToAdd)' はすでに存在します。")
+            }
+            if !units.contains(unitToAdd) { // バインドされたリストに追加する前の最終チェック
+                units.append(unitToAdd)
+                print("新しい単位を事前定義リストに追加しました: \(unitToAdd)。現在のリスト: \(units)")
+            }
         }
-        isEditing.toggle()
+        newUnitTextField = ""
     }
 }
 
 #Preview {
     MedicineInfoView()
-}
-#Preview {
-    ShowUnitPicker(selectedUnit: .constant(""), units: ["あ", "い"])
 }
