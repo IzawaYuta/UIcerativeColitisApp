@@ -378,9 +378,12 @@ struct MedicineInfoView: View {
     }
 }
 
+//MARK: ShowUnitPicker
 struct ShowUnitPicker: View {
     
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
+    @Environment(\.editMode) private var editMode
+    @State private var isEditing = false
     @Binding var selectedUnit: String
     @State var units: [String]
     @State private var showAddAlert = false
@@ -395,7 +398,11 @@ struct ShowUnitPicker: View {
                 .onDelete(perform: deleteUnit)
             } header: {
                 HStack {
-                    EditButton()
+                    Button(action: {
+                        toggleEditMode()
+                    }) {
+                        Text(isEditing ? "完了" : "編集")
+                    }
                     Spacer()
                     Button(action: {
                         showAddAlert.toggle()
@@ -410,6 +417,7 @@ struct ShowUnitPicker: View {
                         }) {
                             Text("追加")
                         }
+                        .disabled(newUnit.isEmpty)
                     }
                 }
             }
@@ -417,7 +425,7 @@ struct ShowUnitPicker: View {
     }
     
     private var uniqueUnits: [String] {
-        Array(Set(medicineDataModel.flatMap { $0.unit })).sorted()
+        Array(Set(medicineDataModel.flatMap { $0.unit }))
     }
     
     private func deleteUnit(at offsets: IndexSet) {
@@ -438,18 +446,34 @@ struct ShowUnitPicker: View {
             }
         }
     }
-
     
     private func addUnit() {
         if !newUnit.isEmpty {
             let realm = try! Realm()
+            
+            let existingUnits = realm.objects(MedicineDataModel.self).flatMap { $0.unit }
+            if existingUnits.contains(newUnit) {
+                print("すでに存在する単位のため、追加しません: \(newUnit)")
+                return
+            }
+            
             try! realm.write {
                 let newMedicine = MedicineDataModel()
                 newMedicine.unit.append(newUnit)
                 realm.add(newMedicine)
+                print("新しい単位が追加されました: \(newUnit)")
             }
             newUnit = ""
         }
+    }
+    
+    private func toggleEditMode() {
+        if isEditing {
+            editMode?.wrappedValue = .inactive
+        } else {
+            editMode?.wrappedValue = .active
+        }
+        isEditing.toggle()
     }
 }
 
