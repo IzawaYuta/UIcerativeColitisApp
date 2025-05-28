@@ -25,6 +25,10 @@ class MedicineDataModel: Object, Identifiable {
     @Persisted var dosage: Int? // 服用量
     @Persisted var unit: List<String> // 単位
     @Persisted var memo: String? // メモ
+    
+    override init() {
+        super.init() // 親クラスの初期化
+    }
 }
 
 //MARK: 排便記録
