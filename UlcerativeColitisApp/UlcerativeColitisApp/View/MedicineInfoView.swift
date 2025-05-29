@@ -1,0 +1,349 @@
+//
+//  MedicineInfoView.swift
+//  UlcerativeColitisApp
+//
+//  Created by Engineer MacBook Air on 2025/05/01.
+//
+
+import SwiftUI
+import RealmSwift
+
+//MARK: お薬情報画面
+struct MedicineInfoView: View {
+    
+    @ObservedResults(MedicineDataModel.self) var medicineDataModel
+    @ObservedRealmObject var medicineModel: MedicineDataModel
+    @Environment(\.dismiss) var dismiss // モーダルを閉じるためのプロパティ
+    
+    @State private var medicineNameTextField = "" // 薬の名前
+    @State private var stockTextField = "" // 在庫
+    @State private var stock: Int? = nil// Int型で保持するプロパティ
+    @State private var dosageTextField = "" // 服用量
+    @State private var dosage: Int? = nil// Int型で保持するプロパティ
+    @State private var newMemoTextEditor = "" // メモ
+    @State private var dosingTimePicker: Date = Date() // 服用時間
+    @State private var addDosingTimePicker = false // 服用時間追加ボタン
+    @State private var predefinedUnits = ["錠", "個", "包", "mg", "ml"]
+    @State private var selectedUnit: String = "錠" // Pickerで選択された値 - INITIALIZE TO "錠"
+    
+    @State var image: UIImage?
+    @State private var showImagePickerDialog = false
+    @State private var showCamera: Bool = false
+    @State private var showLibrary: Bool = false
+    @State private var showUnitPicker: Bool = false
+    
+    private var allUnits: [String] {
+        Array(Set(medicineDataModel.flatMap { $0.unit })).sorted()
+    }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 40) {
+                VStack(spacing: 10) {
+                    //MARK: お薬の画像
+                    VStack(alignment: .center, spacing: 10) {
+                        if let image = image {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle()) // 画像を丸くする
+                        } else {
+                            ZStack {
+                                Rectangle()
+                                    .fill(Color.clear)
+                                    .frame(width: 100, height: 100)
+                                Image(systemName: "pills.fill")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.gray)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.blue.opacity(0.4))
+                                            .frame(width: 100, height: 100)
+                                    )
+                            }
+//                            .onAppear {
+//                                saveMedicineInfo()
+//                            }
+                        }
+                    }
+                    .fullScreenCover(isPresented: $showCamera) {
+                        CameraCaptureView(image: $image)
+                            .ignoresSafeArea()
+                    }
+                    .sheet(isPresented: $showLibrary, content: {
+                        PhotoLibraryPickerView(image: $image)
+                            .ignoresSafeArea()
+                    })
+                    .confirmationDialog(
+                        "",
+                        isPresented: $showImagePickerDialog,
+                        titleVisibility: .hidden
+                    ) {
+                        Button {
+                            showCamera = true
+                        } label: {
+                            Text("カメラで撮る")
+                        }
+                        Button {
+                            showLibrary = true
+                        } label: {
+                            Text("アルバムから選ぶ")
+                        }
+                        Button("キャンセル", role: .cancel) {
+                            showImagePickerDialog = false
+                        }
+                    }
+                    
+                    //MARK: お薬の名前
+                    VStack {
+                        TextField("お薬の名前", text: $medicineNameTextField)
+                            .frame(width: 150, height: 50)
+                            .multilineTextAlignment(.center)
+                            .padding(.bottom, 5)
+                            .overlay(
+                                Rectangle()
+                                    .frame(height: 2)
+                                    .foregroundColor(.gray)
+                                    .padding(.top, -15),
+                                
+                                alignment: .bottom
+                            )
+                    }
+                }
+                
+                //MARK: 服用量
+                HStack {
+                    Text("服用量")
+                    TextField("", text: $dosageTextField)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.center)
+                        .frame(width: 100)
+                        .onChange(of: dosageTextField) { newValue in
+                            dosage = Int(newValue) // 文字列を数値に変換
+                        }
+                    Picker("単位を選択", selection: $selectedUnit) {
+                        ForEach(allUnits, id: \.self) { unitText in
+                            Text(unitText).tag(unitText)
+                        }
+                    }
+                }
+                
+                //MARK: 服用時間
+                HStack {
+                    Text("服用時間")
+                    Button(action: {
+                        addDosingTimePicker.toggle()
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                }
+                
+                //MARK: 在庫
+                HStack {
+                    Text("在庫")
+                    TextField("", text: $stockTextField)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .multilineTextAlignment(.center)
+                        .frame(width: 100)
+                        .onChange(of: dosageTextField) { newValue in
+                            stock = Int(newValue) // 文字列を数値に変換
+                        }
+                    Text(selectedUnit)
+                }
+                .padding()
+                
+                //MARK: メモ
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $newMemoTextEditor)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 100)
+                        .border(.gray)
+                    
+                    if newMemoTextEditor.isEmpty {
+                        Text("メモ")
+                            .foregroundColor(Color(.placeholderText))
+                            .padding(.vertical, 5)
+                            .padding(.horizontal, 5)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .padding()
+                
+                //MARK: キャンセル・保存ボタン
+                HStack {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 150, height: 40)
+                        Text("キャンセル")
+                    }
+                    .onTapGesture {
+                        dismiss()
+                        stockTextField = ""
+                        dosageTextField = ""
+                        newMemoTextEditor = ""
+                        medicineNameTextField = ""
+                    }
+                    Spacer()
+                        .frame(width: 45)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 150, height: 40)
+                        Text("保存")
+                    }
+                    .onTapGesture {
+                        if medicineNameTextField.isEmpty {
+                        } else {
+                            saveMedicineInfo()
+                        }
+                        dismiss()
+                    }
+                }
+                .padding(.horizontal)
+                Spacer()
+            }
+            .padding()
+            
+            //MARK: ツールバー
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu("編集") {
+                        Button(action: {
+                            if image != nil {
+                                self.image = nil
+                            }
+                            
+                            if image == nil {
+                                showImagePickerDialog = true
+                            }
+                        }) {
+                            Text("画像を変更")
+                        }
+                        
+                        Button(action: {
+                            showUnitPicker = true
+                        }) {
+                            Text("お薬の単位を変更")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showUnitPicker) {
+                ShowUnitPicker(units: $predefinedUnits)
+            }
+        }
+    }
+    
+    //MARK: メソッド
+    func saveMedicineInfo() {
+        let realm = try! Realm()
+        try! realm.write {
+            let medicineDataModel = MedicineDataModel()
+            let jpagImage = image?.jpegData(compressionQuality: 1.0)
+            medicineDataModel.photoImage = jpagImage
+            medicineDataModel.medicineName = medicineNameTextField
+            medicineDataModel.dosage = dosage
+            medicineDataModel.stock = stock
+            medicineDataModel.memo = newMemoTextEditor
+            realm.add(medicineDataModel)
+        }
+    }
+}
+
+//MARK: ShowUnitPicker
+struct ShowUnitPicker: View {
+    
+    @ObservedResults(MedicineDataModel.self) var medicineDataModel
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var showAddDummyAlert = false
+    @State private var newUnitTextField = ""
+    @Binding var units: [String]
+    
+    private var allUnits: [String] {
+        Array(Set(medicineDataModel.flatMap { $0.unit })).sorted()
+    }
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(allUnits, id: \.self) { unitName in
+                    Text(unitName)
+                }
+                .onDelete(perform: deleteOrModifyUnit)
+            }
+            .navigationTitle("単位を管理")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack {
+                        Button("追加") {
+                            showAddDummyAlert.toggle()
+                        }
+                        .alert("", isPresented: $showAddDummyAlert) {
+                            TextField("", text: $newUnitTextField)
+                            Button("キャンセル", role: .cancel) {}
+                            Button("保存") {
+                                addNewUnitToDatabase()
+                            }
+                        }
+                        EditButton()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) { Button("閉じる") { dismiss() } }
+            }
+        }
+    }
+    
+    // 単位の削除または変更（非常に複雑な処理になる）
+    private func deleteOrModifyUnit(at offsets: IndexSet) {
+        let realm = try! Realm()
+        for index in offsets {
+            let unitNameToModify = allUnits[index]
+            
+            
+            print("警告: 単位 '\(unitNameToModify)' を全ての薬から削除しますか？この操作は元に戻せません。")
+            try! realm.write {
+                let medicinesToUpdate = medicineDataModel.where {
+                    $0.unit.contains(unitNameToModify)
+                }.thaw()
+                
+                if let medicinesToUpdate = medicinesToUpdate {
+                    for medicine in medicinesToUpdate {
+                        if let thawedMedicine = medicine.thaw() {
+                            if let unitIndex = thawedMedicine.unit.firstIndex(of: unitNameToModify) {
+                                thawedMedicine.unit.remove(at: unitIndex)
+                                print("薬 '\(thawedMedicine.medicineName)' から単位 '\(unitNameToModify)' を削除しました。")
+                            }
+                        }
+                    }
+                } else {
+                    print("単位 '\(unitNameToModify)' を含む薬が見つかりませんでした（解凍失敗）。")
+                }
+            }
+        }
+    }
+    
+    private func addNewUnitToDatabase() {
+        let realm = try! Realm()
+        let unitName = newUnitTextField.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if unitName.isEmpty {
+            newUnitTextField = ""
+            return
+        }
+        
+        let model = MedicineDataModel()
+        model.unit.append(unitName)
+        
+        try! realm.write {
+            realm.add(model)
+        }
+    }
+}
+
+#Preview {
+    MedicineInfoView(medicineModel: MedicineDataModel())
+}
