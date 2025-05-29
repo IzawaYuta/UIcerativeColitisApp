@@ -12,6 +12,7 @@ import RealmSwift
 struct MedicineInfoView: View {
     
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
+    @ObservedRealmObject var medicineModel: MedicineDataModel
     @Environment(\.dismiss) var dismiss // モーダルを閉じるためのプロパティ
     
     @State private var medicineNameTextField = "" // 薬の名前
@@ -61,6 +62,9 @@ struct MedicineInfoView: View {
                                             .frame(width: 100, height: 100)
                                     )
                             }
+//                            .onAppear {
+//                                saveMedicineInfo()
+//                            }
                         }
                     }
                     .fullScreenCover(isPresented: $showCamera) {
@@ -133,10 +137,6 @@ struct MedicineInfoView: View {
                         addDosingTimePicker.toggle()
                     }) {
                         Image(systemName: "plus")
-                    }
-                    if addDosingTimePicker {
-                        DatePicker("服用時間", selection: $dosingTimePicker, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
                     }
                 }
                 
@@ -242,6 +242,8 @@ struct MedicineInfoView: View {
         let realm = try! Realm()
         try! realm.write {
             let medicineDataModel = MedicineDataModel()
+            let jpagImage = image?.jpegData(compressionQuality: 1.0)
+            medicineDataModel.photoImage = jpagImage
             medicineDataModel.medicineName = medicineNameTextField
             medicineDataModel.dosage = dosage
             medicineDataModel.stock = stock
@@ -343,5 +345,5 @@ struct ShowUnitPicker: View {
 }
 
 #Preview {
-    MedicineInfoView()
+    MedicineInfoView(medicineModel: MedicineDataModel())
 }

@@ -20,7 +20,10 @@ struct MainTabView: View {
                 StoolsRecordView(selectedDate: Date())
             }
             Tab("3", systemImage: "plus") {
-                MedicineInfoView()
+                MedicineInfoView(medicineModel: MedicineDataModel())
+            }
+            Tab("4", systemImage: "plus") {
+                MedicineListView()
             }
         }
     }
