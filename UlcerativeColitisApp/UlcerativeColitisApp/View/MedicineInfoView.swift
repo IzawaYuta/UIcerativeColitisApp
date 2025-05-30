@@ -152,16 +152,20 @@ struct MedicineInfoView: View {
                                 dosageTextField = "" // デフォルト値（空文字列）を設定
                             }
                         }
-                    Picker("単位を選択", selection: $selectedUnit) {
-                        ForEach(allUnits, id: \.self) { unitText in
-                            Text(unitText).tag(unitText)
+                    if allUnits.isEmpty {
+                        unitEmpty()
+                    } else {
+                        Picker("単位を選択", selection: $selectedUnit) {
+                            ForEach(allUnits, id: \.self) { unitText in
+                                Text(unitText).tag(unitText)
+                            }
                         }
-                    }
-                    .onAppear {
-                        if let unit = overwriteMedicine?.unit {
-                            selectedUnit = unit
-                        } else {
-                            selectedUnit = "錠"
+                        .onAppear {
+                            if let unit = overwriteMedicine?.unit {
+                                selectedUnit = unit
+                            } else if let firstUnit = allUnits.first {
+                                selectedUnit = firstUnit
+                            }
                         }
                     }
                 }
@@ -344,6 +348,17 @@ struct MedicineInfoView: View {
                 )
         }
     }
+    
+    private func unitEmpty() -> some View {
+        Button(action: {
+            showUnitPicker.toggle()
+        }) {
+            Image(systemName: "plus")
+        }
+        .sheet(isPresented: $showUnitPicker) {
+            ShowUnitPicker(units: $predefinedUnits)
+        }
+    }
 }
 
 //MARK: ShowUnitPicker
@@ -363,10 +378,14 @@ struct ShowUnitPicker: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(allUnits, id: \.self) { unitName in
-                    Text(unitName)
+                if allUnits.isEmpty {
+                    Text("単位を追加してください")
+                } else {
+                    ForEach(allUnits, id: \.self) { unitName in
+                        Text(unitName)
+                    }
+                    .onDelete(perform: deleteOrModifyUnit)
                 }
-                .onDelete(perform: deleteOrModifyUnit)
             }
             .navigationTitle("単位を管理")
             .toolbar {
@@ -376,7 +395,7 @@ struct ShowUnitPicker: View {
                             showAddDummyAlert.toggle()
                         }
                         .alert("", isPresented: $showAddDummyAlert) {
-                            TextField("", text: $newUnitTextField)
+                            TextField("mg、本", text: $newUnitTextField)
                             Button("キャンセル", role: .cancel) {}
                             Button("保存") {
                                 addNewUnitToDatabase()
