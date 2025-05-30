@@ -129,7 +129,7 @@ struct ToDayView: View {
                         Image(systemName: "plus")
                     }
                     .sheet(isPresented: $showMedicineInfo) {
-                        MedicineInfoView(medicineModel: MedicineDataModel())
+                        MedicineInfoView()
                     }
                     Button(action: {
                         showMedicineList.toggle()

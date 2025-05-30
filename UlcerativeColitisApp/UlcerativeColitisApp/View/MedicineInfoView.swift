@@ -12,19 +12,20 @@ import RealmSwift
 struct MedicineInfoView: View {
     
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
-    @ObservedRealmObject var medicineModel: MedicineDataModel
+//    var medicineModel: MedicineDataModel
+    @State var overwriteMedicine: MedicineDataModel? // 編集対象のデータ
     @Environment(\.dismiss) var dismiss // モーダルを閉じるためのプロパティ
     
     @State private var medicineNameTextField = "" // 薬の名前
     @State private var stockTextField = "" // 在庫
-    @State private var stock: Int? = nil// Int型で保持するプロパティ
+    @State private var stock: Int? = 0// Int型で保持するプロパティ
     @State private var dosageTextField = "" // 服用量
-    @State private var dosage: Int? = nil// Int型で保持するプロパティ
+    @State private var dosage: Int? = 0// Int型で保持するプロパティ
     @State private var newMemoTextEditor = "" // メモ
     @State private var dosingTimePicker: Date = Date() // 服用時間
     @State private var addDosingTimePicker = false // 服用時間追加ボタン
     @State private var predefinedUnits = ["錠", "個", "包", "mg", "ml"]
-    @State private var selectedUnit: String = "錠" // Pickerで選択された値 - INITIALIZE TO "錠"
+    @State private var selectedUnit: String = "錠" // Pickerで選択された値
     
     @State var image: UIImage?
     @State private var showImagePickerDialog = false
@@ -33,7 +34,7 @@ struct MedicineInfoView: View {
     @State private var showUnitPicker: Bool = false
     
     private var allUnits: [String] {
-        Array(Set(medicineDataModel.flatMap { $0.unit })).sorted()
+        Array(Set(medicineDataModel.flatMap { $0.unitList })).sorted()
     }
     
     var body: some View {
@@ -49,22 +50,40 @@ struct MedicineInfoView: View {
                                 .frame(width: 100, height: 100)
                                 .clipShape(Circle()) // 画像を丸くする
                         } else {
-                            ZStack {
-                                Rectangle()
-                                    .fill(Color.clear)
-                                    .frame(width: 100, height: 100)
-                                Image(systemName: "pills.fill")
-                                    .font(.system(size: 60))
-                                    .foregroundColor(.gray)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.blue.opacity(0.4))
-                                            .frame(width: 100, height: 100)
-                                    )
-                            }
-//                            .onAppear {
-//                                saveMedicineInfo()
+//                            if let modelImageData = medicineModel.photoImage {
+//                                image = UIImage(data: modelImageData)
+//                                Image(uiImage: modelImageData)
+//                                    .resizable()
+//                                    .frame(width: 100, height: 100)
+//                            } else {
+//                                ZStack {
+//                                    Rectangle()
+//                                        .fill(Color.clear)
+//                                        .frame(width: 100, height: 100)
+//                                    Image(systemName: "pills.fill")
+//                                        .font(.system(size: 60))
+//                                        .foregroundColor(.gray)
+//                                        .background(
+//                                            Circle()
+//                                                .fill(Color.blue.opacity(0.4))
+//                                                .frame(width: 100, height: 100)
+//                                        )
+//                                }
 //                            }
+                            if let modelImageData = overwriteMedicine?.photoImage {
+                                if let uiImage = UIImage(data: modelImageData) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 100, height: 100)
+                                        .clipShape(Circle())
+                                } else {
+                                    // デコードに失敗した場合のフォールバック
+                                    fallbackView()
+                                }
+                            } else {
+                                fallbackView()
+                            }
                         }
                     }
                     .fullScreenCover(isPresented: $showCamera) {
@@ -109,6 +128,9 @@ struct MedicineInfoView: View {
                                 
                                 alignment: .bottom
                             )
+                            .onAppear {
+                                medicineNameTextField = overwriteMedicine?.medicineName ?? ""
+                            }
                     }
                 }
                 
@@ -123,9 +145,23 @@ struct MedicineInfoView: View {
                         .onChange(of: dosageTextField) { newValue in
                             dosage = Int(newValue) // 文字列を数値に変換
                         }
+                        .onAppear {
+                            if let dosage = overwriteMedicine?.dosage {
+                                dosageTextField = "\(dosage)"
+                            } else {
+                                dosageTextField = "" // デフォルト値（空文字列）を設定
+                            }
+                        }
                     Picker("単位を選択", selection: $selectedUnit) {
                         ForEach(allUnits, id: \.self) { unitText in
                             Text(unitText).tag(unitText)
+                        }
+                    }
+                    .onAppear {
+                        if let unit = overwriteMedicine?.unit {
+                            selectedUnit = unit
+                        } else {
+                            selectedUnit = "錠"
                         }
                     }
                 }
@@ -147,9 +183,17 @@ struct MedicineInfoView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .multilineTextAlignment(.center)
                         .frame(width: 100)
-                        .onChange(of: dosageTextField) { newValue in
+                        .onChange(of: stockTextField) { newValue in
                             stock = Int(newValue) // 文字列を数値に変換
                         }
+                        .onAppear {
+                            if let dosage = overwriteMedicine?.stock {
+                                stockTextField = "\(dosage)"
+                            } else {
+                                stockTextField = "" // デフォルト値（空文字列）を設定
+                            }
+                        }
+
                     Text(selectedUnit)
                 }
                 .padding()
@@ -167,6 +211,9 @@ struct MedicineInfoView: View {
                             .padding(.vertical, 5)
                             .padding(.horizontal, 5)
                             .allowsHitTesting(false)
+                            .onAppear {
+                                newMemoTextEditor = overwriteMedicine?.memo ?? ""
+                            }
                     }
                 }
                 .padding()
@@ -205,6 +252,11 @@ struct MedicineInfoView: View {
                 .padding(.horizontal)
                 Spacer()
             }
+            .onAppear {
+                for model in medicineDataModel {
+                    print(model.unitList)
+                }
+            }
             .padding()
             
             //MARK: ツールバー
@@ -241,14 +293,55 @@ struct MedicineInfoView: View {
     func saveMedicineInfo() {
         let realm = try! Realm()
         try! realm.write {
-            let medicineDataModel = MedicineDataModel()
-            let jpagImage = image?.jpegData(compressionQuality: 1.0)
-            medicineDataModel.photoImage = jpagImage
-            medicineDataModel.medicineName = medicineNameTextField
-            medicineDataModel.dosage = dosage
-            medicineDataModel.stock = stock
-            medicineDataModel.memo = newMemoTextEditor
-            realm.add(medicineDataModel)
+            if let overwrite = overwriteMedicine?.thaw() {
+                // 変更があるか確認
+                let overwriteJpegImage = image?.jpegData(compressionQuality: 1.0)
+                if overwrite.medicineName == medicineNameTextField &&
+                    overwrite.dosage == dosage &&
+                    overwrite.memo == newMemoTextEditor &&
+                    overwrite.photoImage == overwriteJpegImage &&
+                    overwrite.unit == selectedUnit &&
+                    overwrite.stock == stock {
+                    // 変更がない場合は保存せず終了
+                    print("変更がないため保存しません")
+                    return
+                }
+                
+                // 既存データを更新
+                overwrite.medicineName = medicineNameTextField
+                overwrite.dosage = dosage
+                overwrite.memo = newMemoTextEditor
+                overwrite.photoImage = overwriteJpegImage
+                overwrite.unit = selectedUnit
+                overwrite.stock = stock
+            } else {
+                // 新規データ作成
+                let medicineDataModel = MedicineDataModel()
+                let jpagImage = image?.jpegData(compressionQuality: 1.0)
+                medicineDataModel.photoImage = jpagImage
+                medicineDataModel.medicineName = medicineNameTextField
+                medicineDataModel.dosage = dosage
+                medicineDataModel.unit = selectedUnit
+                medicineDataModel.stock = stock
+                medicineDataModel.memo = newMemoTextEditor
+                realm.add(medicineDataModel)
+            }
+        }
+    }
+    
+    private func fallbackView() -> some View {
+        ZStack {
+            Rectangle()
+                .fill(Color.clear)
+                .frame(width: 100, height: 100)
+            Image(systemName: "pills.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+                .background(
+                    Circle()
+                        .fill(Color.blue.opacity(0.4))
+                        .frame(width: 100, height: 100)
+                )
         }
     }
 }
@@ -264,7 +357,7 @@ struct ShowUnitPicker: View {
     @Binding var units: [String]
     
     private var allUnits: [String] {
-        Array(Set(medicineDataModel.flatMap { $0.unit })).sorted()
+        Array(Set(medicineDataModel.flatMap { $0.unitList })).sorted()
     }
     
     var body: some View {
@@ -307,14 +400,14 @@ struct ShowUnitPicker: View {
             print("警告: 単位 '\(unitNameToModify)' を全ての薬から削除しますか？この操作は元に戻せません。")
             try! realm.write {
                 let medicinesToUpdate = medicineDataModel.where {
-                    $0.unit.contains(unitNameToModify)
+                    $0.unitList.contains(unitNameToModify)
                 }.thaw()
                 
                 if let medicinesToUpdate = medicinesToUpdate {
                     for medicine in medicinesToUpdate {
                         if let thawedMedicine = medicine.thaw() {
-                            if let unitIndex = thawedMedicine.unit.firstIndex(of: unitNameToModify) {
-                                thawedMedicine.unit.remove(at: unitIndex)
+                            if let unitIndex = thawedMedicine.unitList.firstIndex(of: unitNameToModify) {
+                                thawedMedicine.unitList.remove(at: unitIndex)
                                 print("薬 '\(thawedMedicine.medicineName)' から単位 '\(unitNameToModify)' を削除しました。")
                             }
                         }
@@ -336,7 +429,7 @@ struct ShowUnitPicker: View {
         }
         
         let model = MedicineDataModel()
-        model.unit.append(unitName)
+        model.unitList.append(unitName)
         
         try! realm.write {
             realm.add(model)
@@ -345,5 +438,5 @@ struct ShowUnitPicker: View {
 }
 
 #Preview {
-    MedicineInfoView(medicineModel: MedicineDataModel())
+    MedicineInfoView()
 }

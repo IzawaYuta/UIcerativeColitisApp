@@ -29,7 +29,7 @@ struct UlcerativeColitisAppApp: App {
             let realm = try! Realm()
             try! realm.write {
                 let model = MedicineDataModel()
-                model.unit.append(objectsIn: ["錠", "個"])
+                model.unitList.append(objectsIn: ["錠", "個"])
                 realm.add(model)
             }
             

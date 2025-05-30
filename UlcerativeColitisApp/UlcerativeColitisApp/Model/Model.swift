@@ -23,12 +23,20 @@ class MedicineDataModel: Object, Identifiable {
     @Persisted var stock: Int? // 在庫
     @Persisted var dosingTime: List<Date?> // 服用時間
     @Persisted var dosage: Int? // 服用量
-    @Persisted var unit: List<String> // 単位
+    @Persisted var unitList: List<String> // 単位
+    @Persisted var unit: String
     @Persisted var memo: String? // メモ
     
     override init() {
         super.init() // 親クラスの初期化
     }
+    
+//    override init() {
+//        super.init()
+//        // unitListに初期値として「錠」と「個」を追加します。
+//        // append(objectsIn:) を使うと、複数の要素を一度に追加できて便利です。
+//        self.unitList.append(objectsIn: ["錠", "個"])
+//    }
 }
 
 //MARK: 排便記録

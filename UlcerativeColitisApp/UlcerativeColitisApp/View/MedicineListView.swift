@@ -17,8 +17,8 @@ struct MedicineListView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(medicineDataModel, id: \.self) { list in
-                    NavigationLink(destination: MedicineInfoView(medicineModel: list)) {
+                ForEach(medicineDataModel.filter{ !$0.medicineName.isEmpty }, id: \.id) { list in
+                    NavigationLink(destination: MedicineInfoView(overwriteMedicine: list)) {
                         HStack {
                             Text(list.medicineName)
                             Spacer()
@@ -29,6 +29,7 @@ struct MedicineListView: View {
                         .listRowSeparatorTint(.clear)
                     }
                 }
+                .onDelete(perform: deleteDataModel)
                 .padding(.horizontal)
                 .frame(height: 60)
                 .background(
@@ -39,6 +40,14 @@ struct MedicineListView: View {
             .listStyle(.inset)
             .padding(.horizontal)
             .navigationTitle("お薬")
+        }
+    }
+    
+    private func deleteDataModel(offset: IndexSet) {
+        let realm = try! Realm()
+        try! realm.write {
+            let model = MedicineDataModel()
+            realm.delete(model)
         }
     }
 }
