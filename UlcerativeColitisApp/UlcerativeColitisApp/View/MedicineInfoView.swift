@@ -26,7 +26,9 @@ struct MedicineInfoView: View {
     @State private var addDosingTimePicker = false // 服用時間追加ボタン
     @State private var predefinedUnits = ["錠", "個", "包", "mg", "ml"]
     @State private var selectedUnit: String = "錠" // Pickerで選択された値
-    
+    @State private var showingDatePickerSheet = false
+    @State private var newDosingTime = Date()
+    @State private var dosingTimeList: [Date] = []
     @State var image: UIImage?
     @State private var showImagePickerDialog = false
     @State private var showCamera: Bool = false
@@ -35,6 +37,13 @@ struct MedicineInfoView: View {
     
     private var allUnits: [String] {
         Array(Set(medicineDataModel.flatMap { $0.unitList })).sorted()
+    }
+    
+    var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter
     }
     
     var body: some View {
@@ -172,13 +181,59 @@ struct MedicineInfoView: View {
                 
                 //MARK: 服用時間
                 HStack {
-                    Text("服用時間")
-                    Button(action: {
-                        addDosingTimePicker.toggle()
-                    }) {
-                        Image(systemName: "plus")
+                    HStack {
+                        Text("服用時間")
+                        Button(action: {
+                            newDosingTime = Date()
+                            showingDatePickerSheet = true
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                    }
+                    .sheet(isPresented: $showingDatePickerSheet) {
+                        NavigationView {
+                            VStack {
+                                DatePicker(
+                                    "Select Time",
+                                    selection: $newDosingTime,
+                                    displayedComponents: .hourAndMinute
+                                )
+                                .datePickerStyle(.wheel)
+                                .labelsHidden()
+                                .padding()
+                                
+                                Spacer()
+                            }
+                            .navigationTitle("Add New Dosing Time")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button("Cancel") {
+                                        showingDatePickerSheet = false
+                                    }
+                                }
+                                ToolbarItem(placement: .navigationBarTrailing) {
+                                    Button("Add") {
+                                        addSelectedDosingTime()
+                                        showingDatePickerSheet = false
+                                        dosingTimeList.append(newDosingTime)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer()
+                    if let overwriteDosingTime = overwriteMedicine?.dosingTime {
+                        ForEach(overwriteDosingTime, id: \.self) { time in
+                            Text(time ?? Date(), formatter: dateFormatter)
+                        }
+                    } else {
+                        ForEach(dosingTimeList, id: \.self) { time in
+                            Text(time, formatter: dateFormatter)
+                        }
                     }
                 }
+                .padding(.horizontal)
                 
                 //MARK: 在庫
                 HStack {
@@ -329,7 +384,20 @@ struct MedicineInfoView: View {
                 medicineDataModel.stock = stock
                 medicineDataModel.memo = newMemoTextEditor
                 realm.add(medicineDataModel)
+                medicineDataModel.dosingTime.append(objectsIn: dosingTimeList)
             }
+        }
+        dosingTimeList = []
+    }
+    
+    private func addSelectedDosingTime() {
+        let realm = try! Realm()
+        try! realm.write {
+            guard let liveMedicine = medicineDataModel.first?.thaw() else {
+                print("Error: No valid MedicineDataModel object found.")
+                return
+            }
+            liveMedicine.dosingTime.append(newDosingTime)
         }
     }
     
