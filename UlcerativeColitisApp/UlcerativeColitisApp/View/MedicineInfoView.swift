@@ -12,7 +12,7 @@ import RealmSwift
 struct MedicineInfoView: View {
     
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
-//    var medicineModel: MedicineDataModel
+    //    var medicineModel: MedicineDataModel
     @State var overwriteMedicine: MedicineDataModel? // 編集対象のデータ
     @Environment(\.dismiss) var dismiss // モーダルを閉じるためのプロパティ
     
@@ -34,6 +34,7 @@ struct MedicineInfoView: View {
     @State private var showCamera: Bool = false
     @State private var showLibrary: Bool = false
     @State private var showUnitPicker: Bool = false
+    @State private var showDosingTimeList: Bool = false
     
     private var allUnits: [String] {
         Array(Set(medicineDataModel.flatMap { $0.unitList })).sorted()
@@ -59,26 +60,26 @@ struct MedicineInfoView: View {
                                 .frame(width: 100, height: 100)
                                 .clipShape(Circle()) // 画像を丸くする
                         } else {
-//                            if let modelImageData = medicineModel.photoImage {
-//                                image = UIImage(data: modelImageData)
-//                                Image(uiImage: modelImageData)
-//                                    .resizable()
-//                                    .frame(width: 100, height: 100)
-//                            } else {
-//                                ZStack {
-//                                    Rectangle()
-//                                        .fill(Color.clear)
-//                                        .frame(width: 100, height: 100)
-//                                    Image(systemName: "pills.fill")
-//                                        .font(.system(size: 60))
-//                                        .foregroundColor(.gray)
-//                                        .background(
-//                                            Circle()
-//                                                .fill(Color.blue.opacity(0.4))
-//                                                .frame(width: 100, height: 100)
-//                                        )
-//                                }
-//                            }
+                            //                            if let modelImageData = medicineModel.photoImage {
+                            //                                image = UIImage(data: modelImageData)
+                            //                                Image(uiImage: modelImageData)
+                            //                                    .resizable()
+                            //                                    .frame(width: 100, height: 100)
+                            //                            } else {
+                            //                                ZStack {
+                            //                                    Rectangle()
+                            //                                        .fill(Color.clear)
+                            //                                        .frame(width: 100, height: 100)
+                            //                                    Image(systemName: "pills.fill")
+                            //                                        .font(.system(size: 60))
+                            //                                        .foregroundColor(.gray)
+                            //                                        .background(
+                            //                                            Circle()
+                            //                                                .fill(Color.blue.opacity(0.4))
+                            //                                                .frame(width: 100, height: 100)
+                            //                                        )
+                            //                                }
+                            //                            }
                             if let modelImageData = overwriteMedicine?.photoImage {
                                 if let uiImage = UIImage(data: modelImageData) {
                                     Image(uiImage: uiImage)
@@ -183,11 +184,16 @@ struct MedicineInfoView: View {
                 HStack {
                     HStack {
                         Text("服用時間")
-                        Button(action: {
-                            newDosingTime = Date()
-                            showingDatePickerSheet = true
-                        }) {
-                            Image(systemName: "plus")
+                        
+                        let maxDosingTimeCount = 5
+                        
+                        if dosingTimeList.count < maxDosingTimeCount {
+                            Button(action: {
+                                newDosingTime = Date()
+                                showingDatePickerSheet = true
+                            }) {
+                                Image(systemName: "plus")
+                            }
                         }
                     }
                     .sheet(isPresented: $showingDatePickerSheet) {
@@ -223,7 +229,8 @@ struct MedicineInfoView: View {
                         }
                     }
                     Spacer()
-                    if let overwriteDosingTime = overwriteMedicine?.dosingTime {
+                    if let overwriteMedicine = medicineDataModel.first(where: { $0.id == self.overwriteMedicine?.id }) {
+                        let overwriteDosingTime = overwriteMedicine.dosingTime
                         ForEach(overwriteDosingTime, id: \.self) { time in
                             Text(time ?? Date(), formatter: dateFormatter)
                         }
@@ -252,7 +259,7 @@ struct MedicineInfoView: View {
                                 stockTextField = "" // デフォルト値（空文字列）を設定
                             }
                         }
-
+                    
                     Text(selectedUnit)
                 }
                 .padding()
@@ -339,11 +346,19 @@ struct MedicineInfoView: View {
                         }) {
                             Text("お薬の単位を変更")
                         }
+                        Button(action: {
+                            showDosingTimeList = true
+                        }) {
+                            Text("服用時間")
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showUnitPicker) {
                 ShowUnitPicker(units: $predefinedUnits)
+            }
+            .sheet(isPresented: $showDosingTimeList) {
+                dosingTimeListView()
             }
         }
     }
@@ -373,6 +388,7 @@ struct MedicineInfoView: View {
                 overwrite.photoImage = overwriteJpegImage
                 overwrite.unit = selectedUnit
                 overwrite.stock = stock
+                overwrite.dosingTime.append(objectsIn: dosingTimeList)
             } else {
                 // 新規データ作成
                 let medicineDataModel = MedicineDataModel()
@@ -425,6 +441,56 @@ struct MedicineInfoView: View {
         }
         .sheet(isPresented: $showUnitPicker) {
             ShowUnitPicker(units: $predefinedUnits)
+        }
+    }
+    
+    private func dosingTimeListView() -> some View {
+        if let overwriteMedicine = medicineDataModel.first(where: { $0.id == self.overwriteMedicine?.id }) {
+            let overwriteDosingTime = overwriteMedicine.dosingTime
+            return AnyView(
+                List {
+                    ForEach(overwriteDosingTime, id: \.self) { time in
+                        if let time = time {
+                            Text(time, formatter: dateFormatter)
+                        }
+                    }
+                    .onDelete { indexSet in
+                        deleteDosingTime(at: indexSet)
+                    }
+                }
+            )
+        } else {
+            return AnyView(Text("データがありません").foregroundColor(.gray))
+        }
+    }
+    
+    private func deleteDosingTime(at offsets: IndexSet) {
+        guard let medicineToUpdate = overwriteMedicine?.thaw(), !medicineToUpdate.isInvalidated else {
+            print("Error: overwriteMedicine is nil or invalidated.")
+            return
+        }
+        
+        guard let realm = medicineToUpdate.realm else {
+            print("Error: Could not get Realm instance from medicine object. The object might not be managed by Realm, or it could be frozen in a way that realm is not accessible.")
+            return
+        }
+        let validIndicesArray = offsets.filter { $0 < medicineToUpdate.dosingTime.count }
+        
+        let validOffsets = IndexSet(validIndicesArray)
+        if validOffsets.isEmpty && !offsets.isEmpty {
+            return
+        }
+        if validOffsets.count != offsets.count {
+        }
+        
+        
+        do {
+            try realm.write {
+                medicineToUpdate.dosingTime.remove(atOffsets: validOffsets)
+            }
+            print("Successfully committed realm.write. Final count after transaction: \(medicineToUpdate.dosingTime.count)")
+        } catch {
+            print("Error deleting dosing time: \(error.localizedDescription)")
         }
     }
 }
@@ -526,4 +592,7 @@ struct ShowUnitPicker: View {
 
 #Preview {
     MedicineInfoView()
+}
+#Preview {
+    MedicineListView()
 }
