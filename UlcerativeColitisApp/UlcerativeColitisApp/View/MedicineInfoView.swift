@@ -35,6 +35,7 @@ struct MedicineInfoView: View {
     @State private var showLibrary: Bool = false
     @State private var showUnitPicker: Bool = false
     @State private var showDosingTimeList: Bool = false
+    @State private var alertNameEmpty: Bool = false
     
     private var allUnits: [String] {
         Array(Set(medicineDataModel.flatMap { $0.unitList })).sorted()
@@ -141,6 +142,12 @@ struct MedicineInfoView: View {
                             .onAppear {
                                 medicineNameTextField = overwriteMedicine?.medicineName ?? ""
                             }
+                        if alertNameEmpty {
+                            // 薬の名前が空の場合のアラート
+                            Text("お薬の名前を入力してください")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
                     }
                 }
                 
@@ -244,7 +251,7 @@ struct MedicineInfoView: View {
                 
                 //MARK: 在庫
                 HStack {
-                    Text("在庫")
+                    Text("残り")
                     TextField("", text: $stockTextField)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .multilineTextAlignment(.center)
@@ -309,6 +316,7 @@ struct MedicineInfoView: View {
                     }
                     .onTapGesture {
                         if medicineNameTextField.isEmpty {
+                            alertNameEmpty.toggle()
                         } else {
                             saveMedicineInfo()
                         }
@@ -370,12 +378,14 @@ struct MedicineInfoView: View {
             if let overwrite = overwriteMedicine?.thaw() {
                 // 変更があるか確認
                 let overwriteJpegImage = image?.jpegData(compressionQuality: 1.0)
+                let overwriteDosingTimeList = Array(overwrite.dosingTime)
                 if overwrite.medicineName == medicineNameTextField &&
                     overwrite.dosage == dosage &&
                     overwrite.memo == newMemoTextEditor &&
                     overwrite.photoImage == overwriteJpegImage &&
                     overwrite.unit == selectedUnit &&
-                    overwrite.stock == stock {
+                    overwrite.stock == stock &&
+                    overwriteDosingTimeList == dosingTimeList {
                     // 変更がない場合は保存せず終了
                     print("変更がないため保存しません")
                     return
