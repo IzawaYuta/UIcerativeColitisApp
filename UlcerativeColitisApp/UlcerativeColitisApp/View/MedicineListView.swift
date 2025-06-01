@@ -29,7 +29,7 @@ struct MedicineListView: View {
                         .listRowSeparatorTint(.clear)
                     }
                 }
-                .onDelete(perform: deleteDataModel)
+                .onDelete(perform: deleteMedicine)
                 .padding(.horizontal)
                 .frame(height: 60)
                 .background(
@@ -40,14 +40,21 @@ struct MedicineListView: View {
             .listStyle(.inset)
             .padding(.horizontal)
             .navigationTitle("お薬")
+//            .onAppear {
+//                print(medicineDataModel.count)
+//            }
         }
     }
     
-    private func deleteDataModel(offset: IndexSet) {
+    private func deleteMedicine(at offsets: IndexSet) {
+        let filtered = medicineDataModel.filter { !$0.medicineName.isEmpty }
         let realm = try! Realm()
         try! realm.write {
-            let model = MedicineDataModel()
-            realm.delete(model)
+            offsets.map { filtered[$0] }.forEach { item in
+                if let obj = realm.object(ofType: MedicineDataModel.self, forPrimaryKey: item.id) {
+                    realm.delete(obj)
+                }
+            }
         }
     }
 }
