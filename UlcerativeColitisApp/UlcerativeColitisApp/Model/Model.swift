@@ -47,16 +47,18 @@ class StoolRecordModel: Object, Identifiable {
     @Persisted var stoolTimes: List<Date> // 便をした時間のリスト
     @Persisted var stoolTypes: List<Int> // 便の種類（1〜6の整数で管理）
     
+    static let typeDescriptions: [Int: String] = [
+        1: "硬便",
+        2: "普通便",
+        3: "軟便",
+        4: "下痢",
+        5: "便秘",
+        6: "血便"
+    ]
+    
     func readableStoolTypes() -> [String] {
-        let typeDescriptions = [
-            1: "硬便",
-            2: "普通便",
-            3: "軟便",
-            4: "下痢",
-            5: "便秘",
-            6: "血便"
-        ]
-        return stoolTypes.compactMap { typeDescriptions[$0] }
+        // static プロパティを使用
+        return stoolTypes.compactMap { StoolRecordModel.typeDescriptions[$0] }
     }
 }
 

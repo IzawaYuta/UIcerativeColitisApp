@@ -23,7 +23,7 @@ struct MainTabView: View {
                 MedicineInfoView()
             }
             Tab("4", systemImage: "plus") {
-                MedicineListView()
+                ChartsView()
             }
         }
     }
