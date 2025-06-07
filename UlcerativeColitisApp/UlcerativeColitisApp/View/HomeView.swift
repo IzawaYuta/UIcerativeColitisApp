@@ -19,8 +19,8 @@ struct HomeView: View {
     
     var body: some View {
         ZStack {
-            Color.whiteblack
-                .ignoresSafeArea()
+//            LinearGradient(gradient: Gradient(colors: [.green, .cyan]), startPoint: .topLeading, endPoint: .bottomTrailing)
+//                .ignoresSafeArea()
             ZStack(alignment: .topTrailing) {
                 HStack {
                     ForEach(SelectButton.allCases, id: \.self) { item in
