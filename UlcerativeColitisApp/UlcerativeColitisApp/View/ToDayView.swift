@@ -52,7 +52,7 @@ struct ToDayView: View {
                     }
                 Spacer()
             }
-            .padding(.top)
+//            .padding(.top)
             .onChange(of: date) { _ in // 日付が変更されたらメモをロード
                 loadMemoForSelectedDate()
             }
