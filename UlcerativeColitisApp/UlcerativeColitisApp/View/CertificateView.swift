@@ -213,7 +213,7 @@ struct CertificateView2: View {
     @State private var showStartDatePicker = false
     @State private var selectedEndDate: Date = Date()
     @State private var selectedDate: Date = Date()
-
+    
     @State private var showEndDatePicker = false
     
     var body: some View {
@@ -269,57 +269,57 @@ struct CertificateView2: View {
             // --- 有効期間 ---
             FormRowHStack {
                 Text("有効期間") // 「有効期限」から変更
-//                    .formLabelStyle()
+                //                    .formLabelStyle()
                 Spacer() // TextFieldを右に寄せる
-//                TextField("", text: $deadlineTextField, prompt: Text("YYYY年MM月DD日"))
-//                    .formTextFieldStyle(width: 130, alignment: .center)
-                    HStack {
-                        ZStack {
-                            Rectangle()
-                                .fill(Color.white)
-                            Button(action: {
-                                showStartDatePicker.toggle()
-                            }) {
-                                Text(selectedDate, style: .date)
-                                    .environment(\.locale, Locale(identifier: "ja_JP"))
-                                    .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
-                                    .foregroundColor(.primary)
-                                    .font(.system(size: 13))
-                            }
-                            .sheet(isPresented: $showStartDatePicker) {
-                                startDatePickerView()
-                                    .presentationDetents([.height(300)])
-                            }
+                //                TextField("", text: $deadlineTextField, prompt: Text("YYYY年MM月DD日"))
+                //                    .formTextFieldStyle(width: 130, alignment: .center)
+                HStack {
+                    ZStack {
+                        Rectangle()
+                            .fill(Color.white)
+                        Button(action: {
+                            showStartDatePicker.toggle()
+                        }) {
+                            Text(selectedDate, style: .date)
+                                .environment(\.locale, Locale(identifier: "ja_JP"))
+                                .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
+                                .foregroundColor(.primary)
+                                .font(.system(size: 13))
                         }
-                        .overlay(
-                            Rectangle() // 細い枠線を追加
-                                .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
-                        )
-                        .frame(width: 130,height: 30, alignment: .center)
-                        Text("から")
-                        ZStack {
-                            Rectangle()
-                                .fill(Color.white)
-                            Button(action: {
-                                showEndDatePicker.toggle()
-                            }) {
-                                Text(selectedEndDate, style: .date)
-                                    .environment(\.locale, Locale(identifier: "ja_JP"))
-                                    .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
-                                    .foregroundColor(.primary)
-                                    .font(.system(size: 13))
-                            }
-                            .sheet(isPresented: $showEndDatePicker) {
-                                endDatePickerView()
-                                    .presentationDetents([.height(300)])
-                            }
+                        .sheet(isPresented: $showStartDatePicker) {
+                            startDatePickerView()
+                                .presentationDetents([.height(300)])
                         }
-                        .overlay(
-                            Rectangle() // 細い枠線を追加
-                                .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
-                        )
-                        .frame(width: 130,height: 30, alignment: .center)
                     }
+                    .overlay(
+                        Rectangle() // 細い枠線を追加
+                            .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
+                    )
+                    .frame(width: 130,height: 30, alignment: .center)
+                    Text("から")
+                    ZStack {
+                        Rectangle()
+                            .fill(Color.white)
+                        Button(action: {
+                            showEndDatePicker.toggle()
+                        }) {
+                            Text(selectedEndDate, style: .date)
+                                .environment(\.locale, Locale(identifier: "ja_JP"))
+                                .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
+                                .foregroundColor(.primary)
+                                .font(.system(size: 13))
+                        }
+                        .sheet(isPresented: $showEndDatePicker) {
+                            endDatePickerView()
+                                .presentationDetents([.height(300)])
+                        }
+                    }
+                    .overlay(
+                        Rectangle() // 細い枠線を追加
+                            .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
+                    )
+                    .frame(width: 130,height: 30, alignment: .center)
+                }
             }
             
             ThinDivider()
@@ -363,12 +363,12 @@ struct CertificateView2: View {
             .padding(.bottom, 20)
             
         }
-            .background(Color(red: 0.99, green: 0.985, blue: 0.93))
-            .overlay {
-                Rectangle()
+        .background(Color(red: 0.99, green: 0.985, blue: 0.93))
+        .overlay {
+            Rectangle()
                 .stroke(Color.black, lineWidth: 1.5)
-            }
-            .padding(.horizontal)
+        }
+        .padding(.horizontal)
     }
     
     func startDatePickerView() -> some View {
@@ -412,6 +412,375 @@ struct CertificateView2: View {
     }
 }
 
+struct DividerView: View {
+    
+    var height: CGFloat = 0.7
+    
+    var body: some View {
+        Divider()
+            .frame(height: height)
+            .background(Color.black.opacity(1.0))
+    }
+}
+
+struct BasicHStack<Content: View>: View {
+    @ViewBuilder let content: Content
+    var body: some View {
+        HStack {
+            content
+        }
+        .padding(.horizontal)
+        .padding(.vertical)
+    }
+}
+
+struct TextFieldStyle: ViewModifier {
+    var width: CGFloat = 100
+    
+    func body(content: Content) -> some View {
+        content
+            .multilineTextAlignment(.center) // 文字を中央寄せにする
+            .background(
+                Rectangle()
+                    .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
+            )
+            .frame(width: width)
+    }
+}
+
+extension View {
+    func styledTextField(width: CGFloat = 100) -> some View {
+        self.modifier(TextFieldStyle(width: width))
+    }
+}
+
+struct CertificateView3: View {
+    
+    @State private var one = ""
+    @State private var two = ""
+    @State private var formattedTwo = "" // フォーマットされた値
+    @State private var three = ""
+    @State private var four = ""
+    @State private var five = ""
+    @State private var six = ""
+    @State private var seven = ""
+    @State private var eight = ""
+    @State private var nine = ""
+    
+    @State private var hierarchyPicker = false
+    @State private var selectedHierarchy = "生活保護　A" // 選択された値を保存
+    @State private var selectedStartDate: Date = Date()
+    @State private var showStartDatePicker = false
+    @State private var showEndDatePicker = false
+    @State private var deliverPicker = false
+    @State private var selectedEndDate: Date = Date()
+    @State private var selectedDate: Date = Date()
+    @State private var deliverDate: Date = Date()
+    
+    let hierarchy = ["生活保護　A", "低所得Ⅰ　B1", "低所得Ⅱ　B2", "一般所得Ⅰ C1", "一般所得Ⅱ C2", "上位所得"]
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Rectangle()
+                    .fill(Color.white)
+                    .stroke(.black.opacity(1), style: StrokeStyle(lineWidth: 2))
+                VStack {
+                    Text("特定医療費（指定難病）受給者証")
+                        .bold()
+                    
+                    DividerView(height: 2)
+                    
+                    BasicHStack {
+                        Text("公費負担者番号")
+                            .font(.system(size: 15))
+                        Spacer()
+                        TextField("", text: $seven)
+                            .styledTextField(width: 200)
+                            .keyboardType(.numberPad)
+                    }
+                    
+                    DividerView()
+                        .padding(.horizontal)
+                    
+                    BasicHStack {
+                        Text("受給者番号")
+                            .font(.system(size: 15))
+                        Spacer()
+                        TextField("", text: $eight)
+                            .styledTextField(width: 200)
+                            .keyboardType(.numberPad)
+                    }
+                    
+                    DividerView()
+                        .padding(.horizontal)
+                    
+                    HStack {
+                        BasicHStack {
+                            Text("被保険者証の\n記号・番号")
+                                .font(.system(size: 12))
+//                            Spacer()
+                            TextField("", text: $nine)
+                                .styledTextField()
+                                .keyboardType(.numbersAndPunctuation)
+                        }
+                        
+                        BasicHStack {
+                            Text("適用\n区分")
+                                .font(.system(size: 12))
+//                            Spacer()
+                            TextField("", text: $one)
+                                .styledTextField(width: 70)
+                        }
+                    }
+                    
+                    DividerView()
+                        .padding(.horizontal)
+                    
+                    BasicHStack {
+                        Text("自己負担上限額")
+                            .font(.system(size: 15))
+                        Spacer()
+                        Text("月額")
+                            .foregroundColor(.gray)
+                        TextField("", text: $two)
+                            .styledTextField()
+                            .keyboardType(.numberPad)
+//                            .onChange(of: two) { newValue in
+//                                formatAmountInput(newValue)
+//                            }
+                        Text("円")
+                            .foregroundColor(.gray)
+                    }
+                    
+                    DividerView()
+                        .padding(.horizontal)
+                    
+                    BasicHStack {
+                        Text("階層区分")
+                            .font(.system(size: 15))
+                        Spacer()
+                        ZStack {
+                            Rectangle()
+                                .fill(Color.white)
+                                .frame(width: 120, height: 21.5)
+                                .overlay {
+                                    Rectangle()
+                                        .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
+                                }
+                            
+                            Button(action: {
+                                hierarchyPicker.toggle()
+                            }) {
+                                Text(selectedHierarchy)
+                                    .foregroundColor(.primary)
+                            }
+                            .sheet(isPresented: $hierarchyPicker) {
+                                hierarchyPickerView()
+                                    .presentationDetents([.height(250)])
+                            }
+                        }
+                    }
+                    
+                    DividerView()
+                        .padding(.horizontal)
+                    
+                    BasicHStack {
+                        Text("有効期限")
+                            .font(.system(size: 15))
+                        Spacer()
+                        ZStack {
+                            Rectangle()
+                                .fill(Color.white)
+                                .frame(width: 120, height: 21)
+                                .overlay {
+                                    Rectangle()
+                                        .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
+                                }
+                            
+                            Button(action: {
+                                showStartDatePicker.toggle()
+                            }) {
+                                Text(selectedStartDate, style: .date)
+                                    .environment(\.locale, Locale(identifier: "ja_JP"))
+                                    .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
+                                    .foregroundColor(.primary)
+                                    .font(.system(size: 13))
+                            }
+                            .sheet(isPresented: $showStartDatePicker) {
+                                startDatePickerView()
+                                    .presentationDetents([.height(250)])
+                            }
+                        }
+                        Text("から")
+                            .font(.system(size: 12))
+                        ZStack {
+                            Rectangle()
+                                .fill(Color.white)
+                                .frame(width: 120, height: 21)
+                                .overlay {
+                                    Rectangle()
+                                        .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
+                                }
+                            
+                            Button(action: {
+                                showEndDatePicker.toggle()
+                            }) {
+                                Text(selectedEndDate, style: .date)
+                                    .environment(\.locale, Locale(identifier: "ja_JP"))
+                                    .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
+                                    .foregroundColor(.primary)
+                                    .font(.system(size: 13))
+                            }
+                            .sheet(isPresented: $showEndDatePicker) {
+                                endDatePickerView()
+                                    .presentationDetents([.height(250)])
+                            }
+                        }
+                    }
+                    
+                    DividerView()
+                        .padding(.horizontal)
+                    
+                    BasicHStack {
+                        Text("交付年月日")
+                            .font(.system(size: 15))
+                        Spacer()
+                        ZStack {
+                            Rectangle()
+                                .fill(Color.white)
+                                .frame(width: 120, height: 21)
+                                .overlay {
+                                    Rectangle()
+                                        .stroke(Color.gray.opacity(0.6), lineWidth: 0.5)
+                                }
+                            
+                            Button(action: {
+                                deliverPicker.toggle()
+                            }) {
+                                Text(deliverDate, style: .date)
+                                    .environment(\.locale, Locale(identifier: "ja_JP"))
+                                    .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
+                                    .foregroundColor(.primary)
+                                    .font(.system(size: 13))
+                            }
+                            .sheet(isPresented: $deliverPicker) {
+                                deliverPickerView()
+                                    .presentationDetents([.height(250)])
+                            }
+                        }
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.vertical)
+            }
+            .padding(.horizontal)
+            .padding(.vertical)
+            .background(
+                Color.orange.opacity(0.5)
+                    .ignoresSafeArea()
+            )
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Image(systemName: "camera.fill")
+                }
+            }
+        }
+    }
+    
+    // 入力値をフォーマットするメソッド
+    private func formatAmountInput(_ value: String) {
+        // 数字以外を取り除く
+        let digitsOnly = value.filter { $0.isNumber }
+        
+        // 数字をIntに変換してフォーマット
+        if let number = Int(digitsOnly) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formattedTwo = formatter.string(from: NSNumber(value: number)) ?? ""
+        } else {
+            two = ""
+        }
+        
+        // フォーマット済みの値をテキストフィールドに反映
+        two = formattedTwo
+    }
+    
+    func hierarchyPickerView() -> some View {
+        Picker("", selection: $selectedHierarchy) {
+            ForEach(hierarchy, id: \.self) { item in
+                Text(item)
+            }
+        }
+        .pickerStyle(.wheel)
+    }
+    
+    func startDatePickerView() -> some View {
+        VStack {
+            DatePicker("有効期限", selection: $selectedStartDate, displayedComponents: .date)
+                .labelsHidden()
+                .datePickerStyle(.wheel)
+                .environment(\.locale, Locale(identifier: "ja_JP"))
+                .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
+            HStack {
+                Button("キャンセル", role: .cancel) {
+                    showStartDatePicker = false
+                }
+                Spacer()
+                Button("保存") {
+                    showStartDatePicker = false
+                }
+            }
+            .padding(.horizontal, 100)
+        }
+    }
+    
+    func endDatePickerView() -> some View {
+        VStack {
+            DatePicker("有効期限", selection: $selectedEndDate, displayedComponents: .date)
+                .labelsHidden()
+                .datePickerStyle(.wheel)
+                .environment(\.locale, Locale(identifier: "ja_JP"))
+                .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
+            HStack {
+                Button("キャンセル", role: .cancel) {
+                    showEndDatePicker = false
+                }
+                Spacer()
+                Button("保存") {
+                    showEndDatePicker = false
+                }
+            }
+            .padding(.horizontal, 100)
+        }
+    }
+    
+    func deliverPickerView() -> some View {
+        VStack {
+            DatePicker("有効期限", selection: $deliverDate, displayedComponents: .date)
+                .labelsHidden()
+                .datePickerStyle(.wheel)
+                .environment(\.locale, Locale(identifier: "ja_JP"))
+                .environment(\.calendar, Calendar(identifier: .japanese)) // 和暦設定
+            HStack {
+                Button("キャンセル", role: .cancel) {
+                    deliverPicker = false
+                }
+                Spacer()
+                Button("保存") {
+                    deliverPicker = false
+                }
+            }
+            .padding(.horizontal, 100)
+        }
+    }
+}
+
+#Preview {
+    CertificateView3()
+}
+
 #Preview {
     CertificateView2()
 }
@@ -419,3 +788,4 @@ struct CertificateView2: View {
 #Preview {
     CertificateView()
 }
+

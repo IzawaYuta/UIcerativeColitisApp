@@ -168,7 +168,8 @@ struct ToDayView: View {
             }
         }
         .background(
-            LinearGradient(gradient: Gradient(colors: [.green.opacity(0.3), .cyan.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
+//            LinearGradient(gradient: Gradient(colors: [.green.opacity(0.3), .cyan.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            RadialGradient(colors: [.cyan.opacity(0.7), .white], center: .top, startRadius: 1, endRadius: 500)
                 .ignoresSafeArea()
         )
         .onAppear { // ビューが最初に表示されたときにメモをロード
