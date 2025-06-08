@@ -33,75 +33,82 @@ import SwiftUI
 enum SelectView: CaseIterable, Identifiable {
     case one
     case two
+    case three
     
     var id: Self { self }
     var iconName: String {
         switch self {
-        case .one: return "house"
-        case .two: return "chart.bar"
+        case .one:
+            return "house"
+        case .two:
+            return "chart.bar"
+        case .three:
+            return "plus"
         }
     }
 }
+
+//struct MainTabView: View {
+//    
+//    @State private var selectView: SelectView = .one
+//    
+//    var body: some View {
+//        ZStack(alignment: .bottom) {
+//            contentView
+//            ZStack {
+//                RoundedRectangle(cornerRadius: 18)
+//                    .fill(Color.red.opacity(0.3))
+//                    .frame(maxWidth: .infinity)
+//                    .frame(height: 70)
+//                    .padding(.horizontal)
+//                
+//                HStack {
+//                    ForEach(SelectView.allCases) { view in
+//                        Button(action: {
+//                            withAnimation {
+//                                selectView = view
+//                            }
+//                        }) {
+//                            Image(systemName: view.iconName)
+//                                .font(.title)
+//                                .foregroundColor(selectView == view ? .red : .gray)
+//                        }
+//                        .frame(maxWidth: .infinity)
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    
+//    @ViewBuilder
+//    private var contentView: some View {
+//        switch selectView {
+//        case .one:
+//            HomeView()
+//        case .two:
+//            ChartsView()
+//        case .three:
+//            MedicineInfoView()
+//        }
+//    }
+//}
 
 struct MainTabView: View {
-    @State private var selectView: SelectView = .one
     
     var body: some View {
-        ZStack {
-            // 背景色
-            switch selectView {
-            case .one:
-                LinearGradient(gradient: Gradient(colors: [.green.opacity(0.3), .cyan.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
-                    .ignoresSafeArea()
-            case .two:
-                Color.white
-                    .ignoresSafeArea()
+        TabView {
+            Tab("one", systemImage: "house") {
+                HomeView()
             }
-            
-            VStack {
-                Spacer() // コンテンツがタブバーに重ならないように調整
-                
-                // メインコンテンツ
-                Group {
-                    switch selectView {
-                    case .one:
-                        HomeView()
-                    case .two:
-                        ChartsView()
-                    }
-                }
-                .frame(maxWidth: .infinity) // コンテンツの幅を全体に拡張
-                
-                // タブバー
-                ZStack {
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(Color.red.opacity(0.3))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 70)
-                        .padding(.horizontal)
-                    
-                    HStack {
-                        ForEach(SelectView.allCases) { view in
-                            Button(action: {
-                                withAnimation {
-                                    selectView = view
-                                }
-                            }) {
-                                Image(systemName: view.iconName)
-                                    .font(.title)
-                                    .foregroundColor(selectView == view ? .red : .gray)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                    }
-                }
-//                .padding(.horizontal) // タブバーのみに適用
-                .edgesIgnoringSafeArea(.bottom)
+            Tab("one", systemImage: "house") {
+                ChartsView()
+            }
+            Tab("one", systemImage: "house") {
+                MedicineInfoView()
             }
         }
     }
 }
-
 
 #Preview {
     MainTabView()

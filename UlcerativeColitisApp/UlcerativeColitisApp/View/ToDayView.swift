@@ -40,130 +40,137 @@ struct ToDayView: View {
     }
     
     var body: some View {
-        VStack(spacing: 30) {
-            HStack {
-                Text(formattedDate)
-                    .padding(.horizontal)
-                    .font(.system(size: 28, weight: .bold))
-                    .onTapGesture { showDatePicker = true }
-                    .sheet(isPresented: $showDatePicker) {
-                        DatePickerSheet(selectedDate: $date)
-                            .presentationDetents([.height(450)])
-                    }
-                Spacer()
-            }
-//            .padding(.top)
-            .onChange(of: date) { _ in // 日付が変更されたらメモをロード
-                loadMemoForSelectedDate()
-            }
-            
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.blue.opacity(0.1))
+        ZStack {
+
+            VStack(spacing: 30) {
+                HStack {
+                    Text(formattedDate)
+                        .padding(.horizontal)
+                        .font(.system(size: 28, weight: .bold))
+                        .onTapGesture { showDatePicker = true }
+                        .sheet(isPresented: $showDatePicker) {
+                            DatePickerSheet(selectedDate: $date)
+                                .presentationDetents([.height(450)])
+                        }
+                    Spacer()
+                }
+                //            .padding(.top)
+                .onChange(of: date) { _ in // 日付が変更されたらメモをロード
+                    loadMemoForSelectedDate()
+                }
                 
-                HStack(spacing: 15) {
-                    Button(action: {
-                        showStoolsRecordView = true
-                    }) {
-                        Image(systemName: "plus")
-                    }
-                    .font(.system(size: 15))
-                    .frame(width: 30, height: 30)
-                    .foregroundColor(.white)
-                    .background(Color.blue)
-                    .clipShape(Capsule())
-                    .sheet(isPresented: $showStoolsRecordView) {
-                        StoolsRecordView(selectedDate: date)
-                            .presentationDetents([.medium, .large])
-                    }
-                    //                        Divider().frame(height: 10)
-                    VStack {
-                        
-                        Text("\(stoolRecordCountForSelectedDate)")
-                            .font(.title.weight(.bold))
-                            .foregroundColor(.primary)
-//                            .id("total_\(date)")
-                        Text("排便回数")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(minWidth: 60, alignment: .center)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.blue.opacity(0.1))
                     
-                    Divider().frame(height: 40)
-                    
-                    HStack(spacing: 8) {
-                        let counts = stoolTypeCountsForSelectedDate
+                    HStack(spacing: 15) {
+                        Button(action: {
+                            showStoolsRecordView = true
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                        .font(.system(size: 15))
+                        .frame(width: 30, height: 30)
+                        .foregroundColor(.white)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                        .sheet(isPresented: $showStoolsRecordView) {
+                            StoolsRecordView(selectedDate: date)
+                                .presentationDetents([.medium, .large])
+                        }
+                        //                        Divider().frame(height: 10)
+                        VStack {
+                            
+                            Text("\(stoolRecordCountForSelectedDate)")
+                                .font(.title.weight(.bold))
+                                .foregroundColor(.primary)
+                            //                            .id("total_\(date)")
+                            Text("排便回数")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(minWidth: 60, alignment: .center)
                         
-                        ForEach(stoolTypesInfo, id: \.id) { typeInfo in
-                            let count = counts[typeInfo.id] ?? 0
-                            VStack(spacing: 3) {
-                                Image(typeInfo.image)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 25, height: 25)
-                                    .opacity(count > 0 ? 1.0 : 0.3)
-                                
-                                Text("\(count)")
-                                    .font(.footnote.weight(count > 0 ? .semibold : .regular))
-                                    .foregroundColor(count > 0 ? .primary : .secondary)
+                        Divider().frame(height: 40)
+                        
+                        HStack(spacing: 8) {
+                            let counts = stoolTypeCountsForSelectedDate
+                            
+                            ForEach(stoolTypesInfo, id: \.id) { typeInfo in
+                                let count = counts[typeInfo.id] ?? 0
+                                VStack(spacing: 3) {
+                                    Image(typeInfo.image)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 25, height: 25)
+                                        .opacity(count > 0 ? 1.0 : 0.3)
+                                    
+                                    Text("\(count)")
+                                        .font(.footnote.weight(count > 0 ? .semibold : .regular))
+                                        .foregroundColor(count > 0 ? .primary : .secondary)
+                                }
+                                .frame(minWidth: 30)
                             }
-                            .frame(minWidth: 30)
+                        }
+                        .id("types_\(date)")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                }
+                .frame(height: 85)
+                .padding(.horizontal)
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.blue.opacity(0.1))
+                    
+                    HStack {
+                        Button(action: {
+                            showMedicineInfo.toggle()
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                        .sheet(isPresented: $showMedicineInfo) {
+                            MedicineInfoView()
+                        }
+                        Button(action: {
+                            showMedicineList.toggle()
+                        }) {
+                            Image(systemName: "arrow.up")
+                        }
+                        .sheet(isPresented: $showMedicineList) {
+                            MedicineListView()
                         }
                     }
-                    .id("types_\(date)")
                 }
+                .frame(height: 85)
                 .padding(.horizontal)
-                .padding(.vertical, 10)
-            }
-            .frame(height: 85)
-            .padding(.horizontal)
-            
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.blue.opacity(0.1))
                 
-                HStack {
-                    Button(action: {
-                        showMedicineInfo.toggle()
-                    }) {
-                        Image(systemName: "plus")
-                    }
-                    .sheet(isPresented: $showMedicineInfo) {
-                        MedicineInfoView()
-                    }
-                    Button(action: {
-                        showMedicineList.toggle()
-                    }) {
-                        Image(systemName: "arrow.up")
-                    }
-                    .sheet(isPresented: $showMedicineList) {
-                        MedicineListView()
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $newMemoTextEditor)
+                        .padding()
+                        .frame(height: 100)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
+                        .font(.system(size: 16, weight: .regular, design: .default))
+                        .padding(.horizontal, 20)
+                        .onSubmit {
+                            saveMemo()
+                        }
+                    
+                    if newMemoTextEditor.isEmpty {
+                        Text("メモ")
+                            .foregroundColor(Color(.placeholderText))
+                            .padding(.vertical, 22)
+                            .padding(.horizontal, 40)
                     }
                 }
+                Spacer()
             }
-            .frame(height: 85)
-            .padding(.horizontal)
-            
-            ZStack(alignment: .topLeading) {
-                TextEditor(text: $newMemoTextEditor)
-                    .padding()
-                    .frame(height: 100)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
-                    .font(.system(size: 16, weight: .regular, design: .default))
-                    .padding(.horizontal, 20)
-                    .onSubmit {
-                        saveMemo()
-                    }
-                
-                if newMemoTextEditor.isEmpty {
-                    Text("メモ")
-                        .foregroundColor(Color(.placeholderText))
-                        .padding(.vertical, 22)
-                        .padding(.horizontal, 40)
-                }
-            }
-            Spacer()
         }
+        .background(
+            LinearGradient(gradient: Gradient(colors: [.green.opacity(0.3), .cyan.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
+                .ignoresSafeArea()
+        )
         .onAppear { // ビューが最初に表示されたときにメモをロード
             loadMemoForSelectedDate()
         }
