@@ -74,3 +74,9 @@ class UCCountModel: Object, Identifiable {
     @Persisted var id = UUID()
     @Persisted var date: Date? = Date()
 }
+
+class UsualMedicineModel: Object, Identifiable {
+    @Persisted(primaryKey: true) var id: ObjectId // 一意の識別子
+    @Persisted var groupName: String
+    @Persisted var medicines: List<MedicineDataModel>
+}

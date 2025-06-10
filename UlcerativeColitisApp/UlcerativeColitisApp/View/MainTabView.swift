@@ -107,6 +107,9 @@ struct MainTabView: View {
                 MedicineInfoView()
             }
             Tab("one", systemImage: "house") {
+                MedicineListView()
+            }
+            Tab("one", systemImage: "house") {
                 CertificateView3()
             }
         }
