@@ -149,42 +149,97 @@ struct MedicineListView: View {
     func usualMedicineView() -> some View {
         VStack {
             Button(action: {
+                self.targetGroup = nil
                 showUsualMedicineEditView.toggle()
             }) {
                 Image(systemName: "plus")
             }
-            .sheet(isPresented: $showUsualMedicineEditView) {
-                usualMedicineViewEditView()
-            }
             
             List {
-                ForEach(usualMedicineModel, id: \.id) { list in
-                    VStack {
-                        Text(list.groupName)
-                            .font(.title3)
-                        Text(list.medicines.map { $0.medicineName }.joined(separator: "\n"))
-                        .foregroundColor(.secondary)
+                ForEach(usualMedicineModel) { list in
+                    Button(action: {
+                        self.targetGroup = list
+                        self.showUsualMedicineEditView.toggle()
+                    }) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(list.groupName)
+                                    .font(.title3)
+                                Text(list.medicines.map { $0.medicineName }.joined(separator: "\n"))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.gray.opacity(0.5))
+                        }
+                        .contentShape(Rectangle()) // 行全体をタップ可能に
                     }
+                    .buttonStyle(.plain) // Buttonのデフォルトスタイルを無効化
                 }
+                .onDelete(perform: deleteMedicine) // 削除機能を追加
+            }
+        }
+        .sheet(isPresented: $showUsualMedicineEditView) {
+            NavigationView {
+                usualMedicineViewEditView()
             }
         }
     }
     
+//    func deleteUsualMedicine(at offsets: IndexSet) {
+//        // 削除対象のオブジェクトのIDリストを取得
+//        let idsToDelete = offsets.map { usualMedicineModel[$0].id }
+//        
+//        let realm = try! Realm()
+//        
+//        try! realm.write {
+//            // 取得したIDを使って、データベースから削除対象のオブジェクトを再度検索
+//            let groupsToDelete = realm.objects(UsualMedicineModel.self).filter("id IN %@", idsToDelete)
+//            
+//            // ★★★ 最も重要なステップ ★★★
+//            // オブジェクトを削除する前に、そのオブジェクトが持つ薬のリストへの参照をクリアします。
+//            // これにより、カスケード削除（連鎖削除）が防がれ、MedicineDataModelはデータベースに残り続けます。
+//            for group in groupsToDelete {
+//                group.medicines.removeAll()
+//            }
+//            
+//            // 参照をクリアした後、グループオブジェクト本体を削除します。
+//            realm.delete(groupsToDelete)
+//        }
+//    }
+    
+//    private func deleteUsualMedicineGroup(at offsets: IndexSet) {
+//        try? Realm().write {
+//            offsets.map { usualMedicineModel[$0] }.forEach { group in
+//                if let groupToDelete = group.thaw() { // スレッド間で安全にオブジェクトを扱うためthaw()を推奨
+//                    Realm.Configuration.defaultConfiguration.realm?.delete(groupToDelete)
+//                }
+//            }
+//        }
+//    }
     func saveUsualMedicineList() {
         let realm = try! Realm()
         
+        // 選択されたIDからMedicineDataModelオブジェクトのリストを取得
         let selectedMedicines = realm.objects(MedicineDataModel.self).filter("id IN %@", selectedItems)
         
         try! realm.write {
-            let model = UsualMedicineModel()
-            model.groupName = newUsual
-            
-            model.medicines.append(objectsIn: selectedMedicines)
-            
-            realm.add(model)
+            if let groupToEdit = targetGroup, let thawedGroup = groupToEdit.thaw() {
+                // 【編集モード】既存のグループを更新
+                thawedGroup.groupName = newUsual
+                thawedGroup.medicines.removeAll()
+                thawedGroup.medicines.append(objectsIn: selectedMedicines)
+            } else {
+                // 【新規作成モード】新しいグループを作成
+                let model = UsualMedicineModel()
+                model.groupName = newUsual
+                model.medicines.append(objectsIn: selectedMedicines)
+                realm.add(model)
+            }
         }
         newUsual = ""
         selectedItems.removeAll()
+        targetGroup = nil
     }
     
     func usualMedicineViewEditView() -> some View {
@@ -193,7 +248,7 @@ struct MedicineListView: View {
                 saveUsualMedicineList()
                 showUsualMedicineEditView = false
             }) {
-                Image(systemName: "plus")
+                Image(systemName: "circle")
             }
             TextField("", text: $newUsual)
                 .textFieldStyle(.roundedBorder)
@@ -206,10 +261,14 @@ struct MedicineListView: View {
                         Text(medicine.medicineName)
                         Spacer()
                     }
-                    .frame(maxWidth: .infinity) // HStackをリストの幅全体に広げる
+                    .frame(maxWidth: .infinity) 
                     .contentShape(Rectangle()) // タップ可能な領域を拡張
                     .onTapGesture {
                         toggleSelection(for: medicine.id)
+                    }
+                    .onAppear {
+                        newUsual = targetGroup?.groupName ?? ""
+                        selectedItems = Set(targetGroup?.medicines.map { $0.id } ?? [])
                     }
                 }
             }
@@ -220,29 +279,3 @@ struct MedicineListView: View {
 #Preview {
     MedicineListView()
 }
-
-
-
-//func addSelectedMedicinesToGroup() {
-//    // 編集対象のグループが存在しない場合は何もしない
-//    guard let groupToUpdate = targetGroup else { return }
-//    
-//    let realm = try! Realm()
-//    
-//    // 選択されたIDに合致する、管理下のMedicineDataModelオブジェクトを取得
-//    let selectedMedicines = realm.objects(MedicineDataModel.self)
-//        .filter("id IN %@", selectedItems)
-//    
-//    try! realm.write {
-//        // Realmが管理している最新のグループオブジェクトを取得
-//        guard let thawedGroup = groupToUpdate.thaw() else {
-//            // オブジェクトが削除されているなど、何らかの理由で取得できない場合は終了
-//            return
-//        }
-//        
-//        // 既存の薬リストをクリア
-//        thawedGroup.medicines.removeAll()
-//        // 新しく選択された薬リストを追加
-//        thawedGroup.medicines.append(objectsIn: selectedMedicines)
-//    }
-//    }
