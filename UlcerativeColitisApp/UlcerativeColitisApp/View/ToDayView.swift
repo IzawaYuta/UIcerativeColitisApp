@@ -8,6 +8,12 @@
 import SwiftUI
 import RealmSwift
 
+enum DayPicker: String, CaseIterable {
+    case morning = "朝"
+    case noon = "昼"
+    case night = "夜"
+}
+
 struct ToDayView: View {
     
     @State private var date = Date()
@@ -19,6 +25,8 @@ struct ToDayView: View {
     @State private var newMemoTextEditor: String = ""
     //    @Binding var selectedDate: Date
     @State private var showMedicineListView = false
+    @State private var showTakingMedicineListView = false
+    @State private var daySelectPicker: DayPicker = .morning
     @State private var selectedItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     @State private var selectedGroupItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     //    @ObservedResults(DateData.self) var dateDataList
@@ -171,15 +179,48 @@ struct ToDayView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)
                         .fill(Color.blue.opacity(0.1))
-                    
-                    List {
-                        ForEach(takingMedicineModel.filter { isSameDay($0.takingDate, date) }, id: \ .id) { list in
-                            Text(list.medicine.map { $0.medicineName }.joined(separator: "\n"))
-                        }
-                    }
                 }
                 //                .frame(height: 85)
                 .padding(.horizontal)
+                
+                HStack {
+                    Text("朝")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(
+                            Color.red
+                        )
+                        .onTapGesture {
+                            showTakingMedicineListView.toggle()
+                        }
+                        .sheet(isPresented: $showTakingMedicineListView) {
+//                            morningTakingMedicineListView()
+                        }
+                    Text("昼")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(
+                            Color.red
+                        )
+                        .onTapGesture {
+                            showTakingMedicineListView.toggle()
+                        }
+                        .sheet(isPresented: $showTakingMedicineListView) {
+//                            noonTakingMedicineListView()
+                        }
+                    Text("夜")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(
+                            Color.red
+                        )
+                        .onTapGesture {
+                            showTakingMedicineListView.toggle()
+                        }
+                        .sheet(isPresented: $showTakingMedicineListView) {
+//                            nightTakingMedicineListView()
+                        }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal)
+                .padding(.vertical)
                 
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $newMemoTextEditor)
@@ -321,6 +362,12 @@ struct ToDayView: View {
             }) {
                 Image(systemName: "plus")
             }
+//            Picker("", selection: $daySelectPicker) {
+//                ForEach(DayPicker.allCases, id: \.self) { picker in
+//                    Text(picker.rawValue)
+//                }
+//            }
+//            .pickerStyle(.segmented)
             HStack {
                 List {
                     ForEach(medicineDataModel.filter{ !$0.medicineName.isEmpty }, id: \ .id) { list in
@@ -384,17 +431,63 @@ struct ToDayView: View {
         for group in selectedGroups {
             allMedicines.append(contentsOf: group.medicines)
         }
-        // 重複を排除
-//        let uniqueMedicines = Array(Set(allMedicines))
         try! realm.write {
             let model = TakingMedicineModel()
             model.takingDate = date // selectedDateの日付で保存
+//            model.dayPicker = daySelectPicker.rawValue // DayPickerを保存
             model.medicine.append(objectsIn: allMedicines)
             realm.add(model)
         }
         selectedItems = []
         selectedGroupItems = []
     }
+    
+    private func deleteTakingMedicine(at offsets: IndexSet) {
+        let items = takingMedicineModel.filter { isSameDay($0.takingDate, date) }
+        let realm = try! Realm()
+        try! realm.write {
+            offsets.map { items[$0] }
+                .compactMap { $0.thaw() }
+                .filter { !$0.isInvalidated }
+                .forEach { realm.delete($0) }
+        }
+    }
+    
+//    func morningTakingMedicineListView() -> some View {
+//        List {
+//            ForEach(takingMedicineModel.filter {
+//                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.morning.rawValue
+//            }, id: \.id) { list in
+//                ForEach(list.medicine, id: \.id) { medicine in
+//                    Text(medicine.medicineName)
+//                }
+//            }
+//        }
+//    }
+//    
+//    func noonTakingMedicineListView() -> some View {
+//        List {
+//            ForEach(takingMedicineModel.filter {
+//                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.noon.rawValue
+//            }, id: \.id) { list in
+//                ForEach(list.medicine, id: \.id) { medicine in
+//                    Text(medicine.medicineName)
+//                }
+//            }
+//        }
+//    }
+//    
+//    func nightTakingMedicineListView() -> some View {
+//        List {
+//            ForEach(takingMedicineModel.filter {
+//                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.night.rawValue
+//            }, id: \.id) { list in
+//                ForEach(list.medicine, id: \.id) { medicine in
+//                    Text(medicine.medicineName)
+//                }
+//            }
+//        }
+//    }
 }
 
 struct DatePickerSheet: View {
@@ -500,3 +593,16 @@ struct DatePickerSheet: View {
 //            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
 //            .count
 //    }
+
+
+//                    List {
+//                        ForEach(takingMedicineModel.filter { isSameDay($0.takingDate, date) }, id: \ .id) { list in
+//                            Text(list.medicine.map { $0.medicineName }.joined(separator: "\n"))
+//                        }
+//                        .onDelete(perform: deleteTakingMedicine)
+//                    }
+//                    List {
+//                        ForEach(takingMedicineModel.filter { isSameDay($0.takingDate, date) }, id: \ .id) { list in
+//                            Text(list.medicine.map { $0.medicineName }.joined(separator: "\n"))
+//                        }
+//                    }
