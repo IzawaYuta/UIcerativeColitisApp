@@ -17,9 +17,10 @@ struct ToDayView: View {
     //    @State private var count: Int = 0
     @State private var showStoolsRecordView = false
     @State private var newMemoTextEditor: String = ""
-//    @Binding var selectedDate: Date
+    //    @Binding var selectedDate: Date
     @State private var showMedicineListView = false
     @State private var selectedItems: Set<ObjectId> = [] // 選択された項目のIDを保持
+    @State private var selectedGroupItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     //    @ObservedResults(DateData.self) var dateDataList
     //    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
     @ObservedResults(
@@ -29,6 +30,7 @@ struct ToDayView: View {
     @ObservedResults(MemoModel.self) var memoModel
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
     @ObservedResults(TakingMedicineModel.self) var takingMedicineModel
+    @ObservedResults(UsualMedicineModel.self) var usualMedicineModel
     
     let stoolTypesInfo = [
         (id: 1, label: "硬便", image: "1"),
@@ -172,7 +174,7 @@ struct ToDayView: View {
                     
                     List {
                         ForEach(takingMedicineModel.filter { isSameDay($0.takingDate, date) }, id: \ .id) { list in
-                            Text(list.medicine.map { $0.medicineName }.joined(separator: ", "))
+                            Text(list.medicine.map { $0.medicineName }.joined(separator: "\n"))
                         }
                     }
                 }
@@ -319,17 +321,37 @@ struct ToDayView: View {
             }) {
                 Image(systemName: "plus")
             }
-            List {
-                ForEach(medicineDataModel.filter{ !$0.medicineName.isEmpty }, id: \ .id) { list in
-                    HStack {
-                        Image(systemName: selectedItems.contains(list.id) ? "checkmark.circle.fill" : "circle")
-                        Text(list.medicineName)
-                        Spacer()
+            HStack {
+                List {
+                    ForEach(medicineDataModel.filter{ !$0.medicineName.isEmpty }, id: \ .id) { list in
+                        HStack {
+                            Image(systemName: selectedItems.contains(list.id) ? "checkmark.circle.fill" : "circle")
+                            Text(list.medicineName)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity) // HStackをリストの幅全体に広げる
+                        .contentShape(Rectangle()) // タップ可能な領域を拡張
+                        .onTapGesture {
+                            toggleSelection(for: list.id)
+                        }
                     }
-                    .frame(maxWidth: .infinity) // HStackをリストの幅全体に広げる
-                    .contentShape(Rectangle()) // タップ可能な領域を拡張
-                    .onTapGesture {
-                        toggleSelection(for: list.id)
+                }
+                List {
+                    ForEach(usualMedicineModel, id: \.id) { usual in
+                        HStack {
+                            Image(systemName: selectedGroupItems.contains(usual.id) ? "checkmark.circle.fill" : "circle")
+                            VStack(alignment: .leading) {
+                                Text(usual.groupName)
+                                Text(usual.medicines.map { $0.medicineName }.joined(separator: "\n"))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity) // HStackをリストの幅全体に広げる
+                        .contentShape(Rectangle()) // タップ可能な領域を拡張
+                        .onTapGesture {
+                            toggleGroupSelection(for: usual.id)
+                        }
                     }
                 }
             }
@@ -345,16 +367,33 @@ struct ToDayView: View {
         }
     }
     
+    private func toggleGroupSelection(for id: ObjectId) {
+        if selectedGroupItems.contains(id) {
+            selectedGroupItems.remove(id)
+        } else {
+            selectedGroupItems.insert(id)
+        }
+    }
+    
     func saveTakingMedicine() {
         let realm = try! Realm()
         let selectedMedicines = realm.objects(MedicineDataModel.self).filter("id IN %@", selectedItems)
+        // 追加: selectedGroupItemsで選択されたUsualMedicineModelのmedicinesも取得
+        let selectedGroups = realm.objects(UsualMedicineModel.self).filter("id IN %@", selectedGroupItems)
+        var allMedicines = Array(selectedMedicines)
+        for group in selectedGroups {
+            allMedicines.append(contentsOf: group.medicines)
+        }
+        // 重複を排除
+//        let uniqueMedicines = Array(Set(allMedicines))
         try! realm.write {
             let model = TakingMedicineModel()
             model.takingDate = date // selectedDateの日付で保存
-            model.medicine.append(objectsIn: selectedMedicines)
+            model.medicine.append(objectsIn: allMedicines)
             realm.add(model)
         }
         selectedItems = []
+        selectedGroupItems = []
     }
 }
 
