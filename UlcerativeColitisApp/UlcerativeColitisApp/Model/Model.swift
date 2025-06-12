@@ -80,3 +80,9 @@ class UsualMedicineModel: Object, Identifiable {
     @Persisted var groupName: String
     @Persisted var medicines: List<MedicineDataModel>
 }
+
+class TakingMedicineModel: Object, Identifiable {
+    @Persisted(primaryKey: true) var id: ObjectId // 一意の識別子
+    @Persisted var takingDate: Date
+    @Persisted var medicine: List<MedicineDataModel>
+}

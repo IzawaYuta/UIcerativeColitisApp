@@ -43,7 +43,7 @@ struct HomeView: View {
     private var contentView: some View {
         switch select {
         case .toDay:
-            ToDayView(selectedDate: .constant(Date()))
+            ToDayView(/*selectedDate: .constant(Date())*/)
         case .month:
             MonthView()
         }

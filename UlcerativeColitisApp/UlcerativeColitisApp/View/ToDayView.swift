@@ -14,17 +14,21 @@ struct ToDayView: View {
     @State private var showDatePicker = false
     @State private var showMedicineInfo = false
     @State private var showMedicineList = false
-//    @State private var count: Int = 0
+    //    @State private var count: Int = 0
     @State private var showStoolsRecordView = false
     @State private var newMemoTextEditor: String = ""
-    @Binding var selectedDate: Date
+//    @Binding var selectedDate: Date
+    @State private var showMedicineListView = false
+    @State private var selectedItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     //    @ObservedResults(DateData.self) var dateDataList
-//    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
+    //    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
     @ObservedResults(
         StoolRecordModel.self,
         sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)
     ) var allStoolRecords
     @ObservedResults(MemoModel.self) var memoModel
+    @ObservedResults(MedicineDataModel.self) var medicineDataModel
+    @ObservedResults(TakingMedicineModel.self) var takingMedicineModel
     
     let stoolTypesInfo = [
         (id: 1, label: "硬便", image: "1"),
@@ -41,7 +45,7 @@ struct ToDayView: View {
     
     var body: some View {
         ZStack {
-
+            
             VStack(spacing: 30) {
                 HStack {
                     Text(formattedDate)
@@ -146,6 +150,35 @@ struct ToDayView: View {
                 .frame(height: 85)
                 .padding(.horizontal)
                 
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.blue.opacity(0.1))
+                    
+                    Button(action: {
+                        showMedicineListView.toggle()
+                    }) {
+                        Text("服用追加")
+                    }
+                    .sheet(isPresented: $showMedicineListView) {
+                        medicineView()
+                    }
+                }
+                .frame(height: 85)
+                .padding(.horizontal)
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.blue.opacity(0.1))
+                    
+                    List {
+                        ForEach(takingMedicineModel.filter { isSameDay($0.takingDate, date) }, id: \ .id) { list in
+                            Text(list.medicine.map { $0.medicineName }.joined(separator: ", "))
+                        }
+                    }
+                }
+                //                .frame(height: 85)
+                .padding(.horizontal)
+                
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $newMemoTextEditor)
                         .padding()
@@ -168,7 +201,7 @@ struct ToDayView: View {
             }
         }
         .background(
-//            LinearGradient(gradient: Gradient(colors: [.green.opacity(0.3), .cyan.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            //            LinearGradient(gradient: Gradient(colors: [.green.opacity(0.3), .cyan.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
             RadialGradient(colors: [.cyan.opacity(0.7), .white], center: .top, startRadius: 1, endRadius: 500)
                 .ignoresSafeArea()
         )
@@ -277,6 +310,52 @@ struct ToDayView: View {
     func isSameDay(_ date1: Date, _ date2: Date) -> Bool {
         Calendar.current.isDate(date1, inSameDayAs: date2)
     }
+    
+    func medicineView() -> some View {
+        VStack {
+            Button(action: {
+                saveTakingMedicine()
+                showMedicineListView = false
+            }) {
+                Image(systemName: "plus")
+            }
+            List {
+                ForEach(medicineDataModel.filter{ !$0.medicineName.isEmpty }, id: \ .id) { list in
+                    HStack {
+                        Image(systemName: selectedItems.contains(list.id) ? "checkmark.circle.fill" : "circle")
+                        Text(list.medicineName)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity) // HStackをリストの幅全体に広げる
+                    .contentShape(Rectangle()) // タップ可能な領域を拡張
+                    .onTapGesture {
+                        toggleSelection(for: list.id)
+                    }
+                }
+            }
+        }
+    }
+    
+    // 選択状態を切り替える
+    private func toggleSelection(for id: ObjectId) {
+        if selectedItems.contains(id) {
+            selectedItems.remove(id)
+        } else {
+            selectedItems.insert(id)
+        }
+    }
+    
+    func saveTakingMedicine() {
+        let realm = try! Realm()
+        let selectedMedicines = realm.objects(MedicineDataModel.self).filter("id IN %@", selectedItems)
+        try! realm.write {
+            let model = TakingMedicineModel()
+            model.takingDate = date // selectedDateの日付で保存
+            model.medicine.append(objectsIn: selectedMedicines)
+            realm.add(model)
+        }
+        selectedItems = []
+    }
 }
 
 struct DatePickerSheet: View {
@@ -318,10 +397,9 @@ struct DatePickerSheet: View {
  var body: some View {
  HStack { /* ... Button, Text, Button ... */ }
  }
- }
  */
 #Preview {
-    ToDayView(selectedDate: .constant(Date()))
+    ToDayView()
 }
 
 
