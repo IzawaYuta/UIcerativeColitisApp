@@ -25,7 +25,9 @@ struct ToDayView: View {
     @State private var newMemoTextEditor: String = ""
     //    @Binding var selectedDate: Date
     @State private var showMedicineListView = false
-    @State private var showTakingMedicineListView = false
+    @State private var showMorningTakingMedicineListView = false
+    @State private var showNoonTakingMedicineListView = false
+    @State private var showNightTakingMedicineListView = false
     @State private var daySelectPicker: DayPicker = .morning
     @State private var selectedItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     @State private var selectedGroupItems: Set<ObjectId> = [] // 選択された項目のIDを保持
@@ -179,6 +181,13 @@ struct ToDayView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)
                         .fill(Color.blue.opacity(0.1))
+                    List {
+                        ForEach(takingMedicineModel.filter {isSameDay($0.takingDate, date)}, id: \.id) { list in
+                            ForEach(list.medicine, id: \.id) { medicine in
+                                Text(medicine.medicineName)
+                            }
+                        }
+                    }
                 }
                 //                .frame(height: 85)
                 .padding(.horizontal)
@@ -190,10 +199,10 @@ struct ToDayView: View {
                             Color.red
                         )
                         .onTapGesture {
-                            showTakingMedicineListView.toggle()
+                            showMorningTakingMedicineListView.toggle()
                         }
-                        .sheet(isPresented: $showTakingMedicineListView) {
-//                            morningTakingMedicineListView()
+                        .sheet(isPresented: $showMorningTakingMedicineListView) {
+                            morningTakingMedicineListView()
                         }
                     Text("昼")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -201,10 +210,10 @@ struct ToDayView: View {
                             Color.red
                         )
                         .onTapGesture {
-                            showTakingMedicineListView.toggle()
+                            showNoonTakingMedicineListView.toggle()
                         }
-                        .sheet(isPresented: $showTakingMedicineListView) {
-//                            noonTakingMedicineListView()
+                        .sheet(isPresented: $showNoonTakingMedicineListView) {
+                            noonTakingMedicineListView()
                         }
                     Text("夜")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -212,10 +221,10 @@ struct ToDayView: View {
                             Color.red
                         )
                         .onTapGesture {
-                            showTakingMedicineListView.toggle()
+                            showNightTakingMedicineListView.toggle()
                         }
-                        .sheet(isPresented: $showTakingMedicineListView) {
-//                            nightTakingMedicineListView()
+                        .sheet(isPresented: $showNightTakingMedicineListView) {
+                            nightTakingMedicineListView()
                         }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -362,12 +371,12 @@ struct ToDayView: View {
             }) {
                 Image(systemName: "plus")
             }
-//            Picker("", selection: $daySelectPicker) {
-//                ForEach(DayPicker.allCases, id: \.self) { picker in
-//                    Text(picker.rawValue)
-//                }
-//            }
-//            .pickerStyle(.segmented)
+            Picker("", selection: $daySelectPicker) {
+                ForEach(DayPicker.allCases, id: \.self) { picker in
+                    Text(picker.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
             HStack {
                 List {
                     ForEach(medicineDataModel.filter{ !$0.medicineName.isEmpty }, id: \ .id) { list in
@@ -434,7 +443,7 @@ struct ToDayView: View {
         try! realm.write {
             let model = TakingMedicineModel()
             model.takingDate = date // selectedDateの日付で保存
-//            model.dayPicker = daySelectPicker.rawValue // DayPickerを保存
+            model.dayPicker = daySelectPicker.rawValue // DayPickerを保存
             model.medicine.append(objectsIn: allMedicines)
             realm.add(model)
         }
@@ -453,41 +462,47 @@ struct ToDayView: View {
         }
     }
     
-//    func morningTakingMedicineListView() -> some View {
-//        List {
-//            ForEach(takingMedicineModel.filter {
-//                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.morning.rawValue
-//            }, id: \.id) { list in
-//                ForEach(list.medicine, id: \.id) { medicine in
-//                    Text(medicine.medicineName)
-//                }
-//            }
-//        }
-//    }
-//    
-//    func noonTakingMedicineListView() -> some View {
-//        List {
-//            ForEach(takingMedicineModel.filter {
-//                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.noon.rawValue
-//            }, id: \.id) { list in
-//                ForEach(list.medicine, id: \.id) { medicine in
-//                    Text(medicine.medicineName)
-//                }
-//            }
-//        }
-//    }
-//    
-//    func nightTakingMedicineListView() -> some View {
-//        List {
-//            ForEach(takingMedicineModel.filter {
-//                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.night.rawValue
-//            }, id: \.id) { list in
-//                ForEach(list.medicine, id: \.id) { medicine in
-//                    Text(medicine.medicineName)
-//                }
-//            }
-//        }
-//    }
+    func morningTakingMedicineListView() -> some View {
+        List {
+            ForEach(takingMedicineModel.filter {
+                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.morning.rawValue
+            }, id: \.id) { list in
+                ForEach(list.medicine, id: \.id) { medicine in
+                    Text(medicine.medicineName)
+                }
+            }
+        }
+    }
+    
+    func noonTakingMedicineListView() -> some View {
+        List {
+            ForEach(takingMedicineModel.filter {
+                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.noon.rawValue
+            }, id: \.id) { list in
+                ForEach(list.medicine, id: \.id) { medicine in
+                    Text(medicine.medicineName)
+                }
+            }
+        }
+    }
+    
+    func nightTakingMedicineListView() -> some View {
+        let nightData = Array(takingMedicineModel.filter {
+            isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.night.rawValue
+        })
+        
+        return List {
+            if nightData.isEmpty {
+                Text("No Data")
+            } else {
+                ForEach(nightData, id: \.id) { list in
+                    ForEach(list.medicine, id: \.id) { medicine in
+                        Text(medicine.medicineName)
+                    }
+                }
+            }
+        }
+    }
 }
 
 struct DatePickerSheet: View {
