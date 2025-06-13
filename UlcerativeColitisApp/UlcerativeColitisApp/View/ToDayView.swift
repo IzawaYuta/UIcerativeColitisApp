@@ -194,6 +194,7 @@ struct ToDayView: View {
                 
                 HStack {
                     Text("朝")
+                        .font(.custom("Kei_Ji", size: 20))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(
                             Color.red
@@ -205,6 +206,7 @@ struct ToDayView: View {
                             morningTakingMedicineListView()
                         }
                     Text("昼")
+                        .font(.custom("Kei_Ji", size: 20))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(
                             Color.red
@@ -216,6 +218,7 @@ struct ToDayView: View {
                             noonTakingMedicineListView()
                         }
                     Text("夜")
+                        .font(.custom("Kei_Ji", size: 20))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(
                             Color.red
