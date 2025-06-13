@@ -28,6 +28,7 @@ struct ToDayView: View {
     @State private var showMorningTakingMedicineListView = false
     @State private var showNoonTakingMedicineListView = false
     @State private var showNightTakingMedicineListView = false
+    @State private var showMemo = false
     @State private var daySelectPicker: DayPicker = .morning
     @State private var selectedItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     @State private var selectedGroupItems: Set<ObjectId> = [] // 選択された項目のIDを保持
@@ -69,6 +70,16 @@ struct ToDayView: View {
                                 .presentationDetents([.height(450)])
                         }
                     Spacer()
+                    Button(action: {
+                        showMemo.toggle()
+                    }) {
+                        Image(systemName: "book.pages")
+                    }
+                    .padding(.horizontal)
+                    .sheet(isPresented: $showMemo) {
+                        memoView()
+                            .presentationDetents([.height(300)])
+                    }
                 }
                 //            .padding(.top)
                 .onChange(of: date) { _ in // 日付が変更されたらメモをロード
@@ -178,27 +189,23 @@ struct ToDayView: View {
                 .frame(height: 85)
                 .padding(.horizontal)
                 
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.blue.opacity(0.1))
-                    List {
-                        ForEach(takingMedicineModel.filter {isSameDay($0.takingDate, date)}, id: \.id) { list in
-                            ForEach(list.medicine, id: \.id) { medicine in
-                                Text(medicine.medicineName)
-                            }
-                        }
-                    }
-                }
-                //                .frame(height: 85)
-                .padding(.horizontal)
+//                ZStack {
+//                    RoundedRectangle(cornerRadius: 15)
+//                        .fill(Color.blue.opacity(0.1))
+//                    List {
+//                        ForEach(takingMedicineModel.filter {isSameDay($0.takingDate, date)}, id: \.id) { list in
+//                            ForEach(list.medicine, id: \.id) { medicine in
+//                                Text(medicine.medicineName)
+//                            }
+//                        }
+//                    }
+//                }
+//                //                .frame(height: 85)
+//                .padding(.horizontal)
                 
                 HStack {
                     Text("朝")
-                        .font(.custom("Kei_Ji", size: 20))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(
-                            Color.red
-                        )
+                        .modifier(CustomView())
                         .onTapGesture {
                             showMorningTakingMedicineListView.toggle()
                         }
@@ -206,11 +213,7 @@ struct ToDayView: View {
                             morningTakingMedicineListView()
                         }
                     Text("昼")
-                        .font(.custom("Kei_Ji", size: 20))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(
-                            Color.red
-                        )
+                        .modifier(CustomView(backgroundColor: .init(red: 0.345, green: 0.888, blue: 0.692, alpha: 1)))
                         .onTapGesture {
                             showNoonTakingMedicineListView.toggle()
                         }
@@ -218,11 +221,7 @@ struct ToDayView: View {
                             noonTakingMedicineListView()
                         }
                     Text("夜")
-                        .font(.custom("Kei_Ji", size: 20))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(
-                            Color.red
-                        )
+                        .modifier(CustomView(backgroundColor: .init(red: 0.695, green: 0.486, blue: 0.888, alpha: 1)))
                         .onTapGesture {
                             showNightTakingMedicineListView.toggle()
                         }
@@ -234,24 +233,9 @@ struct ToDayView: View {
                 .padding(.horizontal)
                 .padding(.vertical)
                 
-                ZStack(alignment: .topLeading) {
-                    TextEditor(text: $newMemoTextEditor)
-                        .padding()
-                        .frame(height: 100)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
-                        .font(.system(size: 16, weight: .regular, design: .default))
-                        .padding(.horizontal, 20)
-                        .onSubmit {
-                            saveMemo()
-                        }
-                    
-                    if newMemoTextEditor.isEmpty {
-                        Text("メモ")
-                            .foregroundColor(Color(.placeholderText))
-                            .padding(.vertical, 22)
-                            .padding(.horizontal, 40)
-                    }
-                }
+//                if !filteredMemos.isEmpty {
+//                    Text(filteredMemos.first?.memo ?? "")
+//                }
                 Spacer()
             }
         }
@@ -506,6 +490,40 @@ struct ToDayView: View {
             }
         }
     }
+    
+    func memoView() -> some View {
+        ZStack {
+            VStack(alignment: .leading) {
+                Text("メモ")
+                Button(action: {
+                    saveMemo()
+                }) {
+                    Image(systemName: "plus")
+                }
+                TextEditor(text: $newMemoTextEditor)
+//                    .padding()
+                    .frame(height: 200)
+                //                .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
+                    .font(.system(size: 16, weight: .regular, design: .default))
+//                    .padding(.horizontal, 20)
+//                    .onSubmit {
+//                        saveMemo()
+//                    }
+                
+                //            if newMemoTextEditor.isEmpty {
+                //                Text("メモ")
+                //                    .foregroundColor(Color(.placeholderText))
+                //                    .padding(.vertical, 22)
+                //                    .padding(.horizontal, 40)
+                //            }
+            }
+        }
+        .padding(.horizontal)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            Color.gray.gradient
+        )
+    }
 }
 
 struct DatePickerSheet: View {
@@ -529,6 +547,20 @@ struct DatePickerSheet: View {
                 dismiss()
             })
         }
+    }
+}
+
+struct CustomView: ViewModifier {
+    
+    var backgroundColor: CGColor = .init(red: 1, green: 0.797, blue: 0.464, alpha: 1)
+    
+    func body(content: Content) -> some View {
+        content
+            .font(.custom("Kei_Ji", size: 50))
+            .foregroundColor(.black.opacity(0.7))
+            .frame(maxWidth: .infinity)
+            .frame(height: 100)
+            .background(Color(backgroundColor))
     }
 }
 
