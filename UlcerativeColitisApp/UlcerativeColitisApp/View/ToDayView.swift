@@ -14,6 +14,34 @@ enum DayPicker: String, CaseIterable {
     case night = "夜"
 }
 
+enum ColorSelection: String, CaseIterable {
+    case blue = "blue"
+    case red = "red"
+    case pink = "pink"
+    
+    var backColor: Color {
+        switch self {
+        case .blue:
+            return Color.blueBack
+        case .red:
+            return Color.redBack
+        case .pink:
+            return Color.pinkBack
+        }
+    }
+    
+    var flontColor: Color {
+        switch self {
+        case .blue:
+            return Color.blueFlont
+        case .red:
+            return Color.redFlont
+        case .pink:
+            return Color.pinkFlont
+        }
+    }
+}
+
 struct ToDayView: View {
     
     @State private var date = Date()
@@ -30,6 +58,7 @@ struct ToDayView: View {
     @State private var showNightTakingMedicineListView = false
     @State private var showMemo = false
     @State private var daySelectPicker: DayPicker = .morning
+    @State private var colorSelection: ColorSelection = .blue
     @State private var selectedItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     @State private var selectedGroupItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     //    @ObservedResults(DateData.self) var dateDataList
@@ -56,12 +85,20 @@ struct ToDayView: View {
         memoModel.filter { isSameDay($0.date, date) }
     }
     
+    
     var body: some View {
         ZStack {
             
             VStack(spacing: 30) {
+                Picker("", selection: $colorSelection) {
+                    ForEach(ColorSelection.allCases, id: \.self) { color in
+                        Text(color.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
                 HStack {
                     Text(formattedDate)
+                        .foregroundColor(.white)
                         .padding(.horizontal)
                         .font(.system(size: 28, weight: .bold))
                         .onTapGesture { showDatePicker = true }
@@ -88,9 +125,9 @@ struct ToDayView: View {
                 
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.blue.opacity(0.1))
+                        .fill(colorSelection.flontColor)
                     
-                    HStack(spacing: 15) {
+                    HStack/*(spacing: 10)*/ {
                         Button(action: {
                             showStoolsRecordView = true
                         }) {
@@ -114,11 +151,12 @@ struct ToDayView: View {
                             //                            .id("total_\(date)")
                             Text("排便回数")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.black)
                         }
                         .frame(minWidth: 60, alignment: .center)
                         
                         Divider().frame(height: 40)
+                            .background(.white)
                         
                         HStack(spacing: 8) {
                             let counts = stoolTypeCountsForSelectedDate
@@ -149,8 +187,8 @@ struct ToDayView: View {
                 
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.blue.opacity(0.1))
-                    
+                        .fill(colorSelection.flontColor)
+
                     HStack {
                         Button(action: {
                             showMedicineInfo.toggle()
@@ -175,7 +213,7 @@ struct ToDayView: View {
                 
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.blue.opacity(0.1))
+                        .fill(colorSelection.flontColor)
                     
                     Button(action: {
                         showMedicineListView.toggle()
@@ -240,8 +278,7 @@ struct ToDayView: View {
             }
         }
         .background(
-            //            LinearGradient(gradient: Gradient(colors: [.green.opacity(0.3), .cyan.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
-            RadialGradient(colors: [.cyan.opacity(0.7), .white], center: .top, startRadius: 1, endRadius: 500)
+            colorSelection.backColor // colorSelection変数が持つプロパティを直接使用
                 .ignoresSafeArea()
         )
         .onAppear { // ビューが最初に表示されたときにメモをロード
