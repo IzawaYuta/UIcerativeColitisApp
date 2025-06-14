@@ -8,23 +8,69 @@
 import SwiftUI
 import RealmSwift
 
+enum DayPicker: String, CaseIterable {
+    case morning = "朝"
+    case noon = "昼"
+    case night = "夜"
+}
+
+enum ColorSelection: String, CaseIterable {
+    case blue = "blue"
+    case red = "red"
+    case pink = "pink"
+    
+    var backColor: Color {
+        switch self {
+        case .blue:
+            return Color.blueBack
+        case .red:
+            return Color.redBack
+        case .pink:
+            return Color.pinkBack
+        }
+    }
+    
+    var flontColor: Color {
+        switch self {
+        case .blue:
+            return Color.blueFlont
+        case .red:
+            return Color.redFlont
+        case .pink:
+            return Color.pinkFlont
+        }
+    }
+}
+
 struct ToDayView: View {
     
     @State private var date = Date()
     @State private var showDatePicker = false
     @State private var showMedicineInfo = false
     @State private var showMedicineList = false
-//    @State private var count: Int = 0
+    //    @State private var count: Int = 0
     @State private var showStoolsRecordView = false
     @State private var newMemoTextEditor: String = ""
-    @Binding var selectedDate: Date
+    //    @Binding var selectedDate: Date
+    @State private var showMedicineListView = false
+    @State private var showMorningTakingMedicineListView = false
+    @State private var showNoonTakingMedicineListView = false
+    @State private var showNightTakingMedicineListView = false
+    @State private var showMemo = false
+    @State private var daySelectPicker: DayPicker = .morning
+    @State private var colorSelection: ColorSelection = .blue
+    @State private var selectedItems: Set<ObjectId> = [] // 選択された項目のIDを保持
+    @State private var selectedGroupItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     //    @ObservedResults(DateData.self) var dateDataList
-//    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
+    //    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
     @ObservedResults(
         StoolRecordModel.self,
         sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)
     ) var allStoolRecords
     @ObservedResults(MemoModel.self) var memoModel
+    @ObservedResults(MedicineDataModel.self) var medicineDataModel
+    @ObservedResults(TakingMedicineModel.self) var takingMedicineModel
+    @ObservedResults(UsualMedicineModel.self) var usualMedicineModel
     
     let stoolTypesInfo = [
         (id: 1, label: "硬便", image: "1"),
@@ -39,131 +85,202 @@ struct ToDayView: View {
         memoModel.filter { isSameDay($0.date, date) }
     }
     
+    
     var body: some View {
-        VStack(spacing: 30) {
-            HStack {
-                Text(formattedDate)
-                    .padding(.horizontal)
-                    .font(.system(size: 28, weight: .bold))
-                    .onTapGesture { showDatePicker = true }
-                    .sheet(isPresented: $showDatePicker) {
-                        DatePickerSheet(selectedDate: $date)
-                            .presentationDetents([.height(450)])
-                    }
-                Spacer()
-            }
-            .padding(.top)
-            .onChange(of: date) { _ in // 日付が変更されたらメモをロード
-                loadMemoForSelectedDate()
-            }
+        ZStack {
             
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.blue.opacity(0.1))
-                
-                HStack(spacing: 15) {
+            VStack(spacing: 30) {
+                Picker("", selection: $colorSelection) {
+                    ForEach(ColorSelection.allCases, id: \.self) { color in
+                        Text(color.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                HStack {
+                    Text(formattedDate)
+                        .foregroundColor(.white)
+                        .padding(.horizontal)
+                        .font(.system(size: 28, weight: .bold))
+                        .onTapGesture { showDatePicker = true }
+                        .sheet(isPresented: $showDatePicker) {
+                            DatePickerSheet(selectedDate: $date)
+                                .presentationDetents([.height(450)])
+                        }
+                    Spacer()
                     Button(action: {
-                        showStoolsRecordView = true
+                        showMemo.toggle()
                     }) {
-                        Image(systemName: "plus")
+                        Image(systemName: "book.pages")
                     }
-                    .font(.system(size: 15))
-                    .frame(width: 30, height: 30)
-                    .foregroundColor(.white)
-                    .background(Color.blue)
-                    .clipShape(Capsule())
-                    .sheet(isPresented: $showStoolsRecordView) {
-                        StoolsRecordView(selectedDate: date)
-                            .presentationDetents([.medium, .large])
+                    .padding(.horizontal)
+                    .sheet(isPresented: $showMemo) {
+                        memoView()
+                            .presentationDetents([.height(300)])
                     }
-                    //                        Divider().frame(height: 10)
-                    VStack {
-                        
-                        Text("\(stoolRecordCountForSelectedDate)")
-                            .font(.title.weight(.bold))
-                            .foregroundColor(.primary)
-//                            .id("total_\(date)")
-                        Text("排便回数")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(minWidth: 60, alignment: .center)
+                }
+                //            .padding(.top)
+                .onChange(of: date) { _ in // 日付が変更されたらメモをロード
+                    loadMemoForSelectedDate()
+                }
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(colorSelection.flontColor)
                     
-                    Divider().frame(height: 40)
-                    
-                    HStack(spacing: 8) {
-                        let counts = stoolTypeCountsForSelectedDate
+                    HStack/*(spacing: 10)*/ {
+                        Button(action: {
+                            showStoolsRecordView = true
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                        .font(.system(size: 15))
+                        .frame(width: 30, height: 30)
+                        .foregroundColor(.white)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                        .sheet(isPresented: $showStoolsRecordView) {
+                            StoolsRecordView(selectedDate: date)
+                                .presentationDetents([.medium, .large])
+                        }
+                        //                        Divider().frame(height: 10)
+                        VStack {
+                            
+                            Text("\(stoolRecordCountForSelectedDate)")
+                                .font(.title.weight(.bold))
+                                .foregroundColor(.primary)
+                            //                            .id("total_\(date)")
+                            Text("排便回数")
+                                .font(.caption)
+                                .foregroundColor(.black)
+                        }
+                        .frame(minWidth: 60, alignment: .center)
                         
-                        ForEach(stoolTypesInfo, id: \.id) { typeInfo in
-                            let count = counts[typeInfo.id] ?? 0
-                            VStack(spacing: 3) {
-                                Image(typeInfo.image)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 25, height: 25)
-                                    .opacity(count > 0 ? 1.0 : 0.3)
-                                
-                                Text("\(count)")
-                                    .font(.footnote.weight(count > 0 ? .semibold : .regular))
-                                    .foregroundColor(count > 0 ? .primary : .secondary)
+                        Divider().frame(height: 40)
+                            .background(.white)
+                        
+                        HStack(spacing: 8) {
+                            let counts = stoolTypeCountsForSelectedDate
+                            
+                            ForEach(stoolTypesInfo, id: \.id) { typeInfo in
+                                let count = counts[typeInfo.id] ?? 0
+                                VStack(spacing: 3) {
+                                    Image(typeInfo.image)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 25, height: 25)
+                                        .opacity(count > 0 ? 1.0 : 0.3)
+                                    
+                                    Text("\(count)")
+                                        .font(.footnote.weight(count > 0 ? .semibold : .regular))
+                                        .foregroundColor(count > 0 ? .primary : .secondary)
+                                }
+                                .frame(minWidth: 30)
                             }
-                            .frame(minWidth: 30)
+                        }
+                        .id("types_\(date)")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                }
+                .frame(height: 85)
+                .padding(.horizontal)
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(colorSelection.flontColor)
+
+                    HStack {
+                        Button(action: {
+                            showMedicineInfo.toggle()
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                        .sheet(isPresented: $showMedicineInfo) {
+                            MedicineInfoView()
+                        }
+                        Button(action: {
+                            showMedicineList.toggle()
+                        }) {
+                            Image(systemName: "arrow.up")
+                        }
+                        .sheet(isPresented: $showMedicineList) {
+                            MedicineListView()
                         }
                     }
-                    .id("types_\(date)")
                 }
+                .frame(height: 85)
                 .padding(.horizontal)
-                .padding(.vertical, 10)
-            }
-            .frame(height: 85)
-            .padding(.horizontal)
-            
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.blue.opacity(0.1))
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(colorSelection.flontColor)
+                    
+                    Button(action: {
+                        showMedicineListView.toggle()
+                    }) {
+                        Text("服用追加")
+                    }
+                    .sheet(isPresented: $showMedicineListView) {
+                        medicineView()
+                    }
+                }
+                .frame(height: 85)
+                .padding(.horizontal)
+                
+//                ZStack {
+//                    RoundedRectangle(cornerRadius: 15)
+//                        .fill(Color.blue.opacity(0.1))
+//                    List {
+//                        ForEach(takingMedicineModel.filter {isSameDay($0.takingDate, date)}, id: \.id) { list in
+//                            ForEach(list.medicine, id: \.id) { medicine in
+//                                Text(medicine.medicineName)
+//                            }
+//                        }
+//                    }
+//                }
+//                //                .frame(height: 85)
+//                .padding(.horizontal)
                 
                 HStack {
-                    Button(action: {
-                        showMedicineInfo.toggle()
-                    }) {
-                        Image(systemName: "plus")
-                    }
-                    .sheet(isPresented: $showMedicineInfo) {
-                        MedicineInfoView()
-                    }
-                    Button(action: {
-                        showMedicineList.toggle()
-                    }) {
-                        Image(systemName: "arrow.up")
-                    }
-                    .sheet(isPresented: $showMedicineList) {
-                        MedicineListView()
-                    }
+                    Text("朝")
+                        .modifier(CustomView())
+                        .onTapGesture {
+                            showMorningTakingMedicineListView.toggle()
+                        }
+                        .sheet(isPresented: $showMorningTakingMedicineListView) {
+                            morningTakingMedicineListView()
+                        }
+                    Text("昼")
+                        .modifier(CustomView(backgroundColor: .init(red: 0.345, green: 0.888, blue: 0.692, alpha: 1)))
+                        .onTapGesture {
+                            showNoonTakingMedicineListView.toggle()
+                        }
+                        .sheet(isPresented: $showNoonTakingMedicineListView) {
+                            noonTakingMedicineListView()
+                        }
+                    Text("夜")
+                        .modifier(CustomView(backgroundColor: .init(red: 0.695, green: 0.486, blue: 0.888, alpha: 1)))
+                        .onTapGesture {
+                            showNightTakingMedicineListView.toggle()
+                        }
+                        .sheet(isPresented: $showNightTakingMedicineListView) {
+                            nightTakingMedicineListView()
+                        }
                 }
-            }
-            .frame(height: 85)
-            .padding(.horizontal)
-            
-            ZStack(alignment: .topLeading) {
-                TextEditor(text: $newMemoTextEditor)
-                    .padding()
-                    .frame(height: 100)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
-                    .font(.system(size: 16, weight: .regular, design: .default))
-                    .padding(.horizontal, 20)
-                    .onSubmit {
-                        saveMemo()
-                    }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal)
+                .padding(.vertical)
                 
-                if newMemoTextEditor.isEmpty {
-                    Text("メモ")
-                        .foregroundColor(Color(.placeholderText))
-                        .padding(.vertical, 22)
-                        .padding(.horizontal, 40)
-                }
+//                if !filteredMemos.isEmpty {
+//                    Text(filteredMemos.first?.memo ?? "")
+//                }
+                Spacer()
             }
-            Spacer()
         }
+        .background(
+            colorSelection.backColor // colorSelection変数が持つプロパティを直接使用
+                .ignoresSafeArea()
+        )
         .onAppear { // ビューが最初に表示されたときにメモをロード
             loadMemoForSelectedDate()
         }
@@ -269,6 +386,181 @@ struct ToDayView: View {
     func isSameDay(_ date1: Date, _ date2: Date) -> Bool {
         Calendar.current.isDate(date1, inSameDayAs: date2)
     }
+    
+    func medicineView() -> some View {
+        VStack {
+            Button(action: {
+                saveTakingMedicine()
+                showMedicineListView = false
+            }) {
+                Image(systemName: "plus")
+            }
+            Picker("", selection: $daySelectPicker) {
+                ForEach(DayPicker.allCases, id: \.self) { picker in
+                    Text(picker.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            HStack {
+                List {
+                    ForEach(medicineDataModel.filter{ !$0.medicineName.isEmpty }, id: \ .id) { list in
+                        HStack {
+                            Image(systemName: selectedItems.contains(list.id) ? "checkmark.circle.fill" : "circle")
+                            Text(list.medicineName)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity) // HStackをリストの幅全体に広げる
+                        .contentShape(Rectangle()) // タップ可能な領域を拡張
+                        .onTapGesture {
+                            toggleSelection(for: list.id)
+                        }
+                    }
+                }
+                List {
+                    ForEach(usualMedicineModel, id: \.id) { usual in
+                        HStack {
+                            Image(systemName: selectedGroupItems.contains(usual.id) ? "checkmark.circle.fill" : "circle")
+                            VStack(alignment: .leading) {
+                                Text(usual.groupName)
+                                Text(usual.medicines.map { $0.medicineName }.joined(separator: "\n"))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity) // HStackをリストの幅全体に広げる
+                        .contentShape(Rectangle()) // タップ可能な領域を拡張
+                        .onTapGesture {
+                            toggleGroupSelection(for: usual.id)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // 選択状態を切り替える
+    private func toggleSelection(for id: ObjectId) {
+        if selectedItems.contains(id) {
+            selectedItems.remove(id)
+        } else {
+            selectedItems.insert(id)
+        }
+    }
+    
+    private func toggleGroupSelection(for id: ObjectId) {
+        if selectedGroupItems.contains(id) {
+            selectedGroupItems.remove(id)
+        } else {
+            selectedGroupItems.insert(id)
+        }
+    }
+    
+    func saveTakingMedicine() {
+        let realm = try! Realm()
+        let selectedMedicines = realm.objects(MedicineDataModel.self).filter("id IN %@", selectedItems)
+        // 追加: selectedGroupItemsで選択されたUsualMedicineModelのmedicinesも取得
+        let selectedGroups = realm.objects(UsualMedicineModel.self).filter("id IN %@", selectedGroupItems)
+        var allMedicines = Array(selectedMedicines)
+        for group in selectedGroups {
+            allMedicines.append(contentsOf: group.medicines)
+        }
+        try! realm.write {
+            let model = TakingMedicineModel()
+            model.takingDate = date // selectedDateの日付で保存
+            model.dayPicker = daySelectPicker.rawValue // DayPickerを保存
+            model.medicine.append(objectsIn: allMedicines)
+            realm.add(model)
+        }
+        selectedItems = []
+        selectedGroupItems = []
+    }
+    
+    private func deleteTakingMedicine(at offsets: IndexSet) {
+        let items = takingMedicineModel.filter { isSameDay($0.takingDate, date) }
+        let realm = try! Realm()
+        try! realm.write {
+            offsets.map { items[$0] }
+                .compactMap { $0.thaw() }
+                .filter { !$0.isInvalidated }
+                .forEach { realm.delete($0) }
+        }
+    }
+    
+    func morningTakingMedicineListView() -> some View {
+        List {
+            ForEach(takingMedicineModel.filter {
+                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.morning.rawValue
+            }, id: \.id) { list in
+                ForEach(list.medicine, id: \.id) { medicine in
+                    Text(medicine.medicineName)
+                }
+            }
+        }
+    }
+    
+    func noonTakingMedicineListView() -> some View {
+        List {
+            ForEach(takingMedicineModel.filter {
+                isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.noon.rawValue
+            }, id: \.id) { list in
+                ForEach(list.medicine, id: \.id) { medicine in
+                    Text(medicine.medicineName)
+                }
+            }
+        }
+    }
+    
+    func nightTakingMedicineListView() -> some View {
+        let nightData = Array(takingMedicineModel.filter {
+            isSameDay($0.takingDate, date) && $0.dayPicker == DayPicker.night.rawValue
+        })
+        
+        return List {
+            if nightData.isEmpty {
+                Text("No Data")
+            } else {
+                ForEach(nightData, id: \.id) { list in
+                    ForEach(list.medicine, id: \.id) { medicine in
+                        Text(medicine.medicineName)
+                    }
+                }
+            }
+        }
+    }
+    
+    func memoView() -> some View {
+        ZStack {
+            VStack(alignment: .leading) {
+                Text("メモ")
+                Button(action: {
+                    saveMemo()
+                }) {
+                    Image(systemName: "plus")
+                }
+                TextEditor(text: $newMemoTextEditor)
+//                    .padding()
+                    .frame(height: 200)
+                //                .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
+                    .font(.system(size: 16, weight: .regular, design: .default))
+//                    .padding(.horizontal, 20)
+//                    .onSubmit {
+//                        saveMemo()
+//                    }
+                
+                //            if newMemoTextEditor.isEmpty {
+                //                Text("メモ")
+                //                    .foregroundColor(Color(.placeholderText))
+                //                    .padding(.vertical, 22)
+                //                    .padding(.horizontal, 40)
+                //            }
+            }
+        }
+        .padding(.horizontal)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            Color.gray.gradient
+        )
+    }
 }
 
 struct DatePickerSheet: View {
@@ -295,6 +587,20 @@ struct DatePickerSheet: View {
     }
 }
 
+struct CustomView: ViewModifier {
+    
+    var backgroundColor: CGColor = .init(red: 1, green: 0.797, blue: 0.464, alpha: 1)
+    
+    func body(content: Content) -> some View {
+        content
+            .font(.custom("Kei_Ji", size: 50))
+            .foregroundColor(.black.opacity(0.7))
+            .frame(maxWidth: .infinity)
+            .frame(height: 100)
+            .background(Color(backgroundColor))
+    }
+}
+
 // --- DateData モデル (StoolsCountViewを使う場合に必要) ---
 /*
  class DateData: Object, ObjectKeyIdentifiable {
@@ -310,10 +616,9 @@ struct DatePickerSheet: View {
  var body: some View {
  HStack { /* ... Button, Text, Button ... */ }
  }
- }
  */
 #Preview {
-    ToDayView(selectedDate: .constant(Date()))
+    ToDayView()
 }
 
 
@@ -375,3 +680,16 @@ struct DatePickerSheet: View {
 //            .filter("date >= %@ AND date < %@", startOfDay as NSDate, startOfNextDay as NSDate)
 //            .count
 //    }
+
+
+//                    List {
+//                        ForEach(takingMedicineModel.filter { isSameDay($0.takingDate, date) }, id: \ .id) { list in
+//                            Text(list.medicine.map { $0.medicineName }.joined(separator: "\n"))
+//                        }
+//                        .onDelete(perform: deleteTakingMedicine)
+//                    }
+//                    List {
+//                        ForEach(takingMedicineModel.filter { isSameDay($0.takingDate, date) }, id: \ .id) { list in
+//                            Text(list.medicine.map { $0.medicineName }.joined(separator: "\n"))
+//                        }
+//                    }

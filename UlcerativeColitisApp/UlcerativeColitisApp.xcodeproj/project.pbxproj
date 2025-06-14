@@ -17,9 +17,22 @@
 		E23407355997347DE7C1044B /* Pods-UlcerativeColitisApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-UlcerativeColitisApp.debug.xcconfig"; path = "Target Support Files/Pods-UlcerativeColitisApp/Pods-UlcerativeColitisApp.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A6D2503F2DFBB8840075F79D /* Exceptions for "UlcerativeColitisApp" folder in "UlcerativeColitisApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A6904F182DBE4A2200C95115 /* UlcerativeColitisApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A6904F1B2DBE4A2200C95115 /* UlcerativeColitisApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A6D2503F2DFBB8840075F79D /* Exceptions for "UlcerativeColitisApp" folder in "UlcerativeColitisApp" target */,
+			);
 			path = UlcerativeColitisApp;
 			sourceTree = "<group>";
 		};
@@ -326,6 +339,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = UlcerativeColitisApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -357,6 +371,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = UlcerativeColitisApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -8,61 +8,43 @@
 import SwiftUI
 
 enum SelectButton: String, CaseIterable {
-    case option1 = "Today"
-    case option2 = "Month"
+    case toDay = "Today"
+    case month = "Month"
 }
 
 struct HomeView: View {
     
-    @State private var select: SelectButton = .option1
+    @State private var select: SelectButton = .toDay
     @Namespace private var segmentControl
     
     var body: some View {
-        ZStack {
-            Color.whiteblack
-                .ignoresSafeArea()
-            ZStack(alignment: .topTrailing) {
-                HStack {
-                    ForEach(SelectButton.allCases, id: \.self) { item in
-                        Text(item.rawValue)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 2)
-                            .foregroundColor(select == item ? .white : .white.opacity(0.6))
-                            .matchedGeometryEffect(id: item, in: segmentControl)
-                            .onTapGesture {
-                                withAnimation {
-                                    self.select = item
-                                }
-                            }
-                    }
-                }
-                .frame(height: 20)
-                .padding(6)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color.gray.opacity(0.8))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 11)
-                                .fill(Color.black)
-                                .matchedGeometryEffect(id: select, in: segmentControl,  isSource: false)
-                                .shadow(color: .black.opacity(0.6), radius: 2, x: 0.5, y: 0.5)
-                        )
-                )
+        NavigationStack {
+            ZStack(alignment: .top) {
+                
                 Spacer()
                 contentView
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .padding(.vertical)
-            .padding(.horizontal)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Picker("", selection: $select) {
+                        ForEach(SelectButton.allCases, id: \.self) { item in
+                            Text(item.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
+                }
+            }
         }
     }
     
     @ViewBuilder
     private var contentView: some View {
         switch select {
-        case .option1:
-            ToDayView(selectedDate: .constant(Date()))
-        case .option2:
+        case .toDay:
+            ToDayView(/*selectedDate: .constant(Date())*/)
+        case .month:
             MonthView()
         }
     }

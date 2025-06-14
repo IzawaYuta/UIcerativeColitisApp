@@ -47,16 +47,18 @@ class StoolRecordModel: Object, Identifiable {
     @Persisted var stoolTimes: List<Date> // 便をした時間のリスト
     @Persisted var stoolTypes: List<Int> // 便の種類（1〜6の整数で管理）
     
+    static let typeDescriptions: [Int: String] = [
+        1: "硬便",
+        2: "普通便",
+        3: "軟便",
+        4: "下痢",
+        5: "便秘",
+        6: "血便"
+    ]
+    
     func readableStoolTypes() -> [String] {
-        let typeDescriptions = [
-            1: "硬便",
-            2: "普通便",
-            3: "軟便",
-            4: "下痢",
-            5: "便秘",
-            6: "血便"
-        ]
-        return stoolTypes.compactMap { typeDescriptions[$0] }
+        // static プロパティを使用
+        return stoolTypes.compactMap { StoolRecordModel.typeDescriptions[$0] }
     }
 }
 
@@ -71,4 +73,17 @@ class MemoModel: Object, Identifiable {
 class UCCountModel: Object, Identifiable {
     @Persisted var id = UUID()
     @Persisted var date: Date? = Date()
+}
+
+class UsualMedicineModel: Object, Identifiable {
+    @Persisted(primaryKey: true) var id: ObjectId // 一意の識別子
+    @Persisted var groupName: String
+    @Persisted var medicines: List<MedicineDataModel>
+}
+
+class TakingMedicineModel: Object, Identifiable {
+    @Persisted(primaryKey: true) var id: ObjectId // 一意の識別子
+    @Persisted var takingDate: Date
+    @Persisted var dayPicker: String // 朝昼夜
+    @Persisted var medicine: List<MedicineDataModel>
 }

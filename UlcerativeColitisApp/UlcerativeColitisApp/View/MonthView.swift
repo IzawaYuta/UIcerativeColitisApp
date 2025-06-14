@@ -94,7 +94,7 @@ struct MonthView: View {
             
             Spacer()
         }
-        .padding(.vertical, 4)
+//        .padding(.vertical, 4)
         .onAppear {
             currentDate = startOfMonth(date: Date())
         }
