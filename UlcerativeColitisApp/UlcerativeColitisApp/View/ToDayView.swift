@@ -90,15 +90,15 @@ struct ToDayView: View {
         ZStack {
             
             VStack(spacing: 30) {
-                Picker("", selection: $colorSelection) {
-                    ForEach(ColorSelection.allCases, id: \.self) { color in
-                        Text(color.rawValue)
-                    }
-                }
-                .pickerStyle(.segmented)
+//                Picker("", selection: $colorSelection) {
+//                    ForEach(ColorSelection.allCases, id: \.self) { color in
+//                        Text(color.rawValue)
+//                    }
+//                }
+//                .pickerStyle(.segmented)
                 HStack {
                     Text(formattedDate)
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .padding(.horizontal)
                         .font(.system(size: 28, weight: .bold))
                         .onTapGesture { showDatePicker = true }
@@ -124,8 +124,9 @@ struct ToDayView: View {
                 }
                 
                 ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(colorSelection.flontColor)
+                    RoundedRectangle(cornerRadius: 50)
+                        .fill(Color.white)
+                        .shadow(radius: 2, x: 5, y: 5)
                     
                     HStack/*(spacing: 10)*/ {
                         Button(action: {
@@ -136,7 +137,7 @@ struct ToDayView: View {
                         .font(.system(size: 15))
                         .frame(width: 30, height: 30)
                         .foregroundColor(.white)
-                        .background(Color.blue)
+                        .background(Color.blue.opacity(0.75))
                         .clipShape(Capsule())
                         .sheet(isPresented: $showStoolsRecordView) {
                             StoolsRecordView(selectedDate: date)
@@ -186,8 +187,9 @@ struct ToDayView: View {
                 .padding(.horizontal)
                 
                 ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(colorSelection.flontColor)
+                    RoundedRectangle(cornerRadius: 50)
+                        .fill(Color.white)
+                        .shadow(radius: 2, x: 5, y: 5)
 
                     HStack {
                         Button(action: {
@@ -212,17 +214,62 @@ struct ToDayView: View {
                 .padding(.horizontal)
                 
                 ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(colorSelection.flontColor)
+                    RoundedRectangle(cornerRadius: 50)
+                        .fill(Color.white)
+                        .shadow(radius: 2, x: 5, y: 5)
                     
-                    Button(action: {
-                        showMedicineListView.toggle()
-                    }) {
-                        Text("服用追加")
+                    HStack {
+                        
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 28)
+                                .fill(Color.blue.opacity(0.75))
+                                .frame(width: 100, height: 55)
+                            Button(action: {
+                                showMedicineListView.toggle()
+                            }) {
+                                Text("服用追加")
+                                    .foregroundColor(.white)
+                                //                                .frame(width: 100, height: )
+                                //                                .background(
+                                //                                    Color.blue.opacity(0.75)
+                                //                                        .clipShape(.capsule)
+                                //                                )
+                            }
+                            .sheet(isPresented: $showMedicineListView) {
+                                medicineView()
+                            }
+                        }
+                        
+                        Spacer()
+                            .frame(width: 30)
+                        
+                        Text("朝")
+                            .modifier(CustomView())
+                            .onTapGesture {
+                                showMorningTakingMedicineListView.toggle()
+                            }
+                            .sheet(isPresented: $showMorningTakingMedicineListView) {
+                                morningTakingMedicineListView()
+                            }
+                        Text("昼")
+                            .modifier(CustomView(backgroundColor: .init(red: 0.345, green: 0.888, blue: 0.692, alpha: 1)))
+                            .onTapGesture {
+                                showNoonTakingMedicineListView.toggle()
+                            }
+                            .sheet(isPresented: $showNoonTakingMedicineListView) {
+                                noonTakingMedicineListView()
+                            }
+                        Text("夜")
+                            .modifier(CustomView(backgroundColor: .init(red: 0.695, green: 0.486, blue: 0.888, alpha: 1)))
+                            .onTapGesture {
+                                showNightTakingMedicineListView.toggle()
+                            }
+                            .sheet(isPresented: $showNightTakingMedicineListView) {
+                                nightTakingMedicineListView()
+                            }
                     }
-                    .sheet(isPresented: $showMedicineListView) {
-                        medicineView()
-                    }
+//                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal)
                 }
                 .frame(height: 85)
                 .padding(.horizontal)
@@ -241,35 +288,7 @@ struct ToDayView: View {
 //                //                .frame(height: 85)
 //                .padding(.horizontal)
                 
-                HStack {
-                    Text("朝")
-                        .modifier(CustomView())
-                        .onTapGesture {
-                            showMorningTakingMedicineListView.toggle()
-                        }
-                        .sheet(isPresented: $showMorningTakingMedicineListView) {
-                            morningTakingMedicineListView()
-                        }
-                    Text("昼")
-                        .modifier(CustomView(backgroundColor: .init(red: 0.345, green: 0.888, blue: 0.692, alpha: 1)))
-                        .onTapGesture {
-                            showNoonTakingMedicineListView.toggle()
-                        }
-                        .sheet(isPresented: $showNoonTakingMedicineListView) {
-                            noonTakingMedicineListView()
-                        }
-                    Text("夜")
-                        .modifier(CustomView(backgroundColor: .init(red: 0.695, green: 0.486, blue: 0.888, alpha: 1)))
-                        .onTapGesture {
-                            showNightTakingMedicineListView.toggle()
-                        }
-                        .sheet(isPresented: $showNightTakingMedicineListView) {
-                            nightTakingMedicineListView()
-                        }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal)
-                .padding(.vertical)
+                
                 
 //                if !filteredMemos.isEmpty {
 //                    Text(filteredMemos.first?.memo ?? "")
@@ -278,7 +297,8 @@ struct ToDayView: View {
             }
         }
         .background(
-            colorSelection.backColor // colorSelection変数が持つプロパティを直接使用
+//            colorSelection.backColor // colorSelection変数が持つプロパティを直接使用
+            Color.colorBack
                 .ignoresSafeArea()
         )
         .onAppear { // ビューが最初に表示されたときにメモをロード
@@ -593,11 +613,16 @@ struct CustomView: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .font(.custom("Kei_Ji", size: 50))
+//            .font(.custom("Kei_Ji", size: 30))
+            .font(.system(size: 30))
             .foregroundColor(.black.opacity(0.7))
-            .frame(maxWidth: .infinity)
-            .frame(height: 100)
-            .background(Color(backgroundColor))
+            .frame(width: 60, height: 60)
+            .background(
+                Circle()
+                    .fill(Color(backgroundColor))
+            )
+//            .padding(.horizontal)
+//            .padding(.vertical)
     }
 }
 
