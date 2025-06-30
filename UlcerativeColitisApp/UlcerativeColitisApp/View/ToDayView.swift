@@ -61,6 +61,8 @@ struct ToDayView: View {
     @State private var colorSelection: ColorSelection = .blue
     @State private var selectedItems: Set<ObjectId> = [] // 選択された項目のIDを保持
     @State private var selectedGroupItems: Set<ObjectId> = [] // 選択された項目のIDを保持
+    @State private var hospitalDate: Date = Date()
+    @State private var showAddHospitalView = false
     //    @ObservedResults(DateData.self) var dateDataList
     //    @ObservedResults(DateData.self, sortDescriptor: SortDescriptor(keyPath: "date", ascending: false)) var dateDataList
     @ObservedResults(
@@ -270,6 +272,32 @@ struct ToDayView: View {
                     }
 //                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.horizontal)
+                }
+                .frame(height: 85)
+                .padding(.horizontal)
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 50)
+                        .fill(Color.white)
+                        .shadow(radius: 2, x: 5, y: 5)
+                    
+                    HStack {
+                        Text("前回")
+                        
+                        Button(action: {
+                            showAddHospitalView.toggle()
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                        .sheet(isPresented: $showAddHospitalView) {
+                            addHospitalView()
+                                .presentationDetents([.height(500)])
+                        }
+                        
+                        Text("次回")
+                    }
+                    .padding(.horizontal)
+                    
                 }
                 .frame(height: 85)
                 .padding(.horizontal)
@@ -580,6 +608,10 @@ struct ToDayView: View {
         .background(
             Color.gray.gradient
         )
+    }
+    
+    func addHospitalView() -> some View {
+        DatePickerSheet(selectedDate: $hospitalDate)
     }
 }
 
