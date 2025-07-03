@@ -87,3 +87,8 @@ class TakingMedicineModel: Object, Identifiable {
     @Persisted var dayPicker: String // 朝昼夜
     @Persisted var medicine: List<MedicineDataModel>
 }
+
+class HospitalVisitModel: Object, Identifiable {
+    @Persisted(primaryKey: true) var id: ObjectId // 一意の識別子
+    @Persisted var visitDate: Date //通院日
+}

@@ -73,6 +73,7 @@ struct ToDayView: View {
     @ObservedResults(MedicineDataModel.self) var medicineDataModel
     @ObservedResults(TakingMedicineModel.self) var takingMedicineModel
     @ObservedResults(UsualMedicineModel.self) var usualMedicineModel
+    @ObservedResults(HospitalVisitModel.self) var hospitalVisitModel
     
     let stoolTypesInfo = [
         (id: 1, label: "硬便", image: "1"),
@@ -282,7 +283,17 @@ struct ToDayView: View {
                         .shadow(radius: 2, x: 5, y: 5)
                     
                     HStack {
-                        Text("前回")
+                        VStack {
+                            Text("前回")
+                            if let recentVisit = getMostRecentVisitDate() {
+                                Text("\(dateFormatter.string(from: recentVisit))")
+                            } else {
+                                Text("ー")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        Spacer()
                         
                         Button(action: {
                             showAddHospitalView.toggle()
@@ -291,10 +302,20 @@ struct ToDayView: View {
                         }
                         .sheet(isPresented: $showAddHospitalView) {
                             addHospitalView()
-                                .presentationDetents([.height(500)])
+                                .presentationDetents([.height(600)])
                         }
                         
-                        Text("次回")
+                        Spacer()
+                        
+                        VStack {
+                            Text("次回")
+                            if let recentVisit = getNextRecentVisitDate() {
+                                Text("\(dateFormatter.string(from: recentVisit))")
+                            } else {
+                                Text("ー")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                     }
                     .padding(.horizontal)
                     
@@ -611,7 +632,74 @@ struct ToDayView: View {
     }
     
     func addHospitalView() -> some View {
-        DatePickerSheet(selectedDate: $hospitalDate)
+        VStack {
+            HStack {
+                Button("キャンセル", role: .cancel) {
+                    showAddHospitalView = false
+                }
+                Spacer()
+                Text("通院予定")
+                    .bold()
+                Spacer()
+                Button("保存") {
+                    saveHospitalVisit()
+                    showAddHospitalView = false
+                }
+            }
+            DatePicker(
+                "通院予定",
+                selection: $hospitalDate,
+                displayedComponents: [.date]
+            )
+            .environment(\.locale, Locale(identifier: "ja_JP"))
+            .datePickerStyle(.graphical)
+            
+            if hospitalVisitModel.isEmpty {
+                Text("通院予定はありません")
+            } else {
+                List {
+                    ForEach(hospitalVisitModel, id: \.id) { list in
+                        Text(dateFormatter.string(from: list.visitDate))
+                    }
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical)
+    }
+    
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "M/d"
+        return formatter
+    }()
+    
+    func saveHospitalVisit() {
+        let realm = try! Realm()
+        try! realm.write {
+            let model = HospitalVisitModel()
+            model.visitDate = hospitalDate
+            realm.add(model)
+        }
+    }
+    
+    private func getMostRecentVisitDate() -> Date? {
+        hospitalVisitModel
+            .filter { $0.visitDate < Calendar.current.startOfDay(for: Date()) }
+            .sorted { $0.visitDate > $1.visitDate }
+            .first?.visitDate
+    }
+    
+    private func getNextRecentVisitDate() -> Date? {
+        hospitalVisitModel
+            .filter { $0.visitDate > Date() }
+            .sorted { $0.visitDate < $1.visitDate }
+            .first?.visitDate
     }
 }
 
